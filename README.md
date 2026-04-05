@@ -99,23 +99,63 @@ kimi --agent-file spark-task-init-skill/SKILL.md
 
 详见：[spark-task-init-skill/SKILL.md](spark-task-init-skill/SKILL.md)
 
+### `ai-config`
+
+一键配置 AI Agent Provider 到各种 AI 编程工具。
+
+**两种配置方式**：
+- **方式 A（推荐）**：`npx @z_ai/coding-helper` 一键配置 GLM
+- **方式 B**：复制预置模板文件，只需修改 API Key
+
+**支持的工具**：Claude Code、Codex CLI、OpenCode、Cline、OpenClaw
+
+**支持的 Provider**：GLM Coding Plan、OpenRouter、OpenAI、Anthropic
+
+**使用方式**：
+```bash
+# GLM 一键配置
+npx @z_ai/coding-helper
+
+# 或手动复制模板
+cp ai-config/templates/codex/glm.toml ~/.codex/config.toml
+```
+
+详见：[ai-config/SKILL.md](ai-config/SKILL.md)
+
 ## 仓库结构
 
 ```
 spark-skills/
 ├── README.md                          # 本文件
 ├── SETUP.md                           # 仓库构建过程文档
+├── docs/                              # 详细文档
+│   ├── index.md                       # 文档中心首页
+│   ├── README.md                      # 文档索引
+│   ├── Agents.md                      # 支持的 AI Agent 工具介绍
+│   └── ai-coding-tools-guide.md       # AI 编程工具配置指南
 ├── install.sh                         # 多 Agent 安装脚本
 ├── github-task-workflow/              # Skill: GitHub 任务工作流
 │   ├── SKILL.md                       # Skill 入口（标准格式）
 │   ├── scripts/                       # 可执行脚本
 │   │   ├── config_loader.py
 │   │   ├── create_issue.py
+│   │   ├── orchestrate.py
+│   │   ├── task_watcher.py
 │   │   └── update_issue.py
 │   └── references/                    # 详细参考文档
-│       └── workflow.md
+│       ├── workflow.md
+│       ├── automation-hooks.md
+│       └── full-auto-roadmap.md
 ├── spark-task-init-skill/             # Skill: spark task 初始化
 │   └── SKILL.md                       # Skill 入口
+├── ai-config/                         # Skill: AI Provider 配置
+│   ├── SKILL.md                       # Skill 入口
+│   └── templates/                     # 各工具配置模板
+│       ├── claude-code/               # Claude Code 模板
+│       ├── codex/                     # Codex CLI 模板
+│       ├── opencode/                  # OpenCode 模板
+│       ├── cline/                     # Cline 配置说明
+│       └── openclaw/                  # OpenClaw 配置片段
 └── ...                                # 未来添加更多 skills
 ```
 

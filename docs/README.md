@@ -1,0 +1,42 @@
+# Spark Skills 文档
+
+欢迎来到 Spark Skills 文档中心。本目录包含项目相关的详细文档和指南。
+
+## 文档索引
+
+### 核心文档
+
+| 文档 | 说明 |
+|------|------|
+| [Agents.md](./Agents.md) | 支持的 AI Agent 工具介绍和配置说明 |
+| [ai-coding-tools-guide.md](./ai-coding-tools-guide.md) | AI 编程工具配置指南（Claude Code、Codex、OpenCode、GLM） |
+
+### 快速导航
+
+#### 新手入门
+
+1. 阅读 [Agents.md](./Agents.md) 了解支持的 AI Agent 工具
+2. 根据你的网络环境选择合适的工具：
+   - 国内用户推荐：Claude Code + GLM-5.1 或 Codex CLI + GLM-5.1
+   - 海外用户推荐：Claude Code + Anthropic
+3. 参考 [ai-coding-tools-guide.md](./ai-coding-tools-guide.md) 进行配置
+
+#### 常见问题
+
+- **Claude Code 连接失败**：参考 [AI 编程工具配置指南 - 连接问题排查](./ai-coding-tools-guide.md#2-claude-code-配置指南)
+- **如何使用国产模型**：参考 [智谱 GLM Coding Plan](./ai-coding-tools-guide.md#6-智谱-glm-coding-plan)
+- **工具对比选择**：参考 [工具对比与选择建议](./ai-coding-tools-guide.md#7-工具对比与选择建议)
+- **一键配置 GLM**：运行 `npx @z_ai/coding-helper`
+
+## 项目主文档
+
+- [项目 README](../README.md) - 项目概览和快速开始
+- [SETUP.md](../SETUP.md) - 仓库构建过程文档
+
+## 贡献文档
+
+如需添加新文档，请：
+
+1. 在 `docs/` 目录下创建 Markdown 文件
+2. 更新本索引文件
+3. 确保文档格式规范、内容准确

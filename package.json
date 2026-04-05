@@ -1,0 +1,24 @@
+{
+  "name": "spark-skills",
+  "version": "1.0.0",
+  "description": "个人习惯的 AI Agent Skill 仓库，统一收集、管理和分发适配多种 AI 编程助手的 Skills。",
+  "main": "docmd.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/variableway/spark-skills.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/variableway/spark-skills/issues"
+  },
+  "homepage": "https://github.com/variableway/spark-skills#readme"
+}

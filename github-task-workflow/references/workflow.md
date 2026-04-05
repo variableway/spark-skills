@@ -132,6 +132,22 @@ python scripts/update_issue.py \
 Any additional notes or follow-up tasks
 ```
 
+## AI Agent 工具配置
+
+本工作流支持多种 AI Agent 工具，不同 Agent 的配置方式有所不同：
+
+- **详细配置指南**：参见 [../../docs/ai-coding-tools-guide.md](../../docs/ai-coding-tools-guide.md)
+- **Agent 工具介绍**：参见 [../../docs/Agents.md](../../docs/Agents.md)
+
+### 各 Agent 使用建议
+
+| Agent | 推荐使用方式 | 模型配置 |
+|-------|-------------|---------|
+| Claude Code | 普通对话模式 + `orchestrate.py` | 需代理，详见 [配置指南](../../docs/ai-coding-tools-guide.md#1-claude-code-连接问题排查) |
+| Codex CLI | 普通对话模式 + `orchestrate.py` | 可用 GLM，详见 [Codex 配置](../../docs/ai-coding-tools-guide.md#2-codex-cli-配置指南) |
+| Kimi CLI | Flow Skill 或自定义 Agent | 国内直连 |
+| aider | 命令行 + `orchestrate.py` | 可用 GLM，详见 [aider 配置](../../docs/ai-coding-tools-guide.md#3-aider-配置指南) |
+
 ## Authentication
 
 Scripts require a GitHub personal access token. Configure via (priority order):

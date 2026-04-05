@@ -93,6 +93,16 @@ flowchart TD
 - `git commit -m "... (Refs: #<编号>)"`
 - `git push`
 
+## 相关文档
+
+| 文档 | 说明 |
+|------|------|
+| [references/workflow.md](references/workflow.md) | 工作流详细参考 |
+| [references/automation-hooks.md](references/automation-hooks.md) | 自动化方案（Git Hooks、GitHub Actions、Watcher、Kimi Hooks） |
+| [references/full-auto-roadmap.md](references/full-auto-roadmap.md) | 全自动化路线图 |
+| [../docs/Agents.md](../docs/Agents.md) | 支持的 AI Agent 工具介绍和配置说明 |
+| [../docs/ai-coding-tools-guide.md](../docs/ai-coding-tools-guide.md) | AI 编程工具配置指南（Claude Code、Codex、aider、GLM） |
+
 ## 脚本说明
 
 所有脚本位于 `scripts/` 目录。
