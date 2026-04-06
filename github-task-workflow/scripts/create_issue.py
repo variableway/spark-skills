@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
-"""Create a GitHub issue from a task description."""
+"""Create a GitHub issue from a task description.
+
+Uses GitHub CLI (gh) when available for better performance,
+falls back to REST API otherwise.
+"""
 
 import argparse
 import json
-import os
 import re
 import subprocess
 import sys
-import urllib.request
-import urllib.error
+from pathlib import Path
 
 from config_loader import get_github_token, get_config_info
+from github_backend import create_backend, is_gh_available, get_backend_info
 
 
 def get_git_remote(repo_url: str = None, remote_name: str = "origin") -> str:
@@ -50,61 +53,6 @@ def get_git_remote(repo_url: str = None, remote_name: str = "origin") -> str:
     return None
 
 
-def create_issue(repo: str, title: str, body: str, labels: list = None, token: str = None) -> dict:
-    """Create a GitHub issue via API.
-    
-    Args:
-        repo: Repository in format "owner/repo"
-        title: Issue title
-        body: Issue body (markdown supported)
-        labels: Optional list of label names
-        token: GitHub personal access token (or loaded from config)
-        
-    Returns:
-        Created issue data as dict
-    """
-    # Token is already resolved by get_github_token() before this is called
-    if not token:
-        raise ValueError(
-            "GitHub token required. Provide via:\n"
-            "  1. --token argument\n"
-            "  2. GITHUB_TOKEN environment variable\n"
-            "  3. Project config: .github-task-workflow.yaml\n"
-            "  4. Global config: ~/.config/github-task-workflow/config.yaml"
-        )
-    
-    url = f"https://api.github.com/repos/{repo}/issues"
-    
-    data = {
-        "title": title,
-        "body": body
-    }
-    
-    if labels:
-        data["labels"] = labels
-    
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json"
-    }
-    
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(data).encode("utf-8"),
-        headers=headers,
-        method="POST"
-    )
-    
-    try:
-        with urllib.request.urlopen(req) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8")
-        raise RuntimeError(f"GitHub API error: {e.code} - {error_body}")
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Create a GitHub issue from a task",
@@ -129,31 +77,41 @@ def main():
     
     print(f"Using repository: {repo}")
     
+    # Show backend info
+    backend_info = get_backend_info()
+    if backend_info["gh_available"]:
+        print(f"Using GitHub CLI: {backend_info['gh_path']}")
+    else:
+        print("GitHub CLI not found, using REST API fallback")
+    
     labels = None
     if args.labels:
         labels = [l.strip() for l in args.labels.split(",")]
     
     # Get token using priority chain
     token = get_github_token(args.token)
-    if not token:
-        print("Error: GitHub token not found.", file=sys.stderr)
-        print("\nTo configure:", file=sys.stderr)
-        print("  1. Set GITHUB_TOKEN environment variable", file=sys.stderr)
-        print("  2. Create project config: .github-task-workflow.yaml", file=sys.stderr)
-        print("  3. Create global config: ~/.config/github-task-workflow/config.yaml", file=sys.stderr)
-        print("\nOr run: python scripts/config_loader.py --init-global", file=sys.stderr)
-        sys.exit(1)
     
-    # Show token source (without revealing the token)
-    config_info = get_config_info()
-    if config_info["token_source"]:
-        print(f"Using token from: {config_info['token_source']}")
+    # Show token source if using API fallback
+    if not backend_info["gh_available"]:
+        if not token:
+            print("Error: GitHub token not found (required for API fallback).", file=sys.stderr)
+            print("\nTo configure:", file=sys.stderr)
+            print("  1. Set GITHUB_TOKEN environment variable", file=sys.stderr)
+            print("  2. Create project config: .github-task-workflow.yaml", file=sys.stderr)
+            print("  3. Create global config: ~/.config/github-task-workflow/config.yaml", file=sys.stderr)
+            print("\nOr install GitHub CLI: https://cli.github.com/", file=sys.stderr)
+            sys.exit(1)
+        
+        config_info = get_config_info()
+        if config_info["token_source"]:
+            print(f"Using token from: {config_info['token_source']}")
     
     try:
-        issue = create_issue(repo, args.title, args.body, labels, token)
+        # Create backend (prefers gh, falls back to API)
+        backend = create_backend(token)
+        issue = backend.create_issue(repo, args.title, args.body, labels)
         
         # Write active issue marker for hook integration
-        from pathlib import Path
         try:
             cwd = Path.cwd()
             (cwd / ".github-task-workflow.active-issue").write_text(str(issue['number']))

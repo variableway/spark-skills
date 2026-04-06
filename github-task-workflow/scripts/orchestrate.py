@@ -16,8 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from config_loader import get_github_token
-from create_issue import create_issue, get_git_remote
-from update_issue import update_issue, add_comment
+from github_backend import create_backend, get_backend_info
 
 
 STATE_FILE = Path(".github-task-workflow.state.json")
@@ -32,16 +31,48 @@ class _TracingArgs:
         self.__dict__.update(kwargs)
 
 
+def _get_git_remote(repo_url: str = None, remote_name: str = "origin") -> str:
+    """Get owner/repo from git remote or provided URL."""
+    import re
+    
+    if repo_url:
+        if re.match(r"^[\w.-]+/[\w.-]+$", repo_url):
+            return repo_url
+        match = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?$", repo_url)
+        if match:
+            return match.group(1)
+    
+    try:
+        result = subprocess.run(
+            ["git", "remote", "get-url", remote_name],
+            capture_output=True, text=True, check=True
+        )
+        remote_url = result.stdout.strip()
+        match = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?$", remote_url)
+        if match:
+            return match.group(1)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+    
+    return None
+
+
 def _ensure_repo_and_token():
-    repo = get_git_remote()
+    repo = _get_git_remote()
     token = get_github_token()
+    
     if not repo:
         print("Error: Could not detect GitHub repository from git remote.", file=sys.stderr)
         sys.exit(1)
-    if not token:
-        print("Error: GitHub token not found.", file=sys.stderr)
+    
+    # Check backend availability
+    backend_info = get_backend_info()
+    if not backend_info["gh_available"] and not token:
+        print("Error: GitHub token not found (required for API fallback).", file=sys.stderr)
         print("Configure via GITHUB_TOKEN env var or .github-task-workflow.yaml", file=sys.stderr)
+        print("Or install GitHub CLI: https://cli.github.com/", file=sys.stderr)
         sys.exit(1)
+    
     return repo, token
 
 
@@ -57,7 +88,6 @@ def cmd_init(args):
         content = task_path.read_text(encoding="utf-8")
     except Exception as e:
         print(f"Error reading task file: {e}", file=sys.stderr)
-        sys.stderr
         sys.exit(1)
 
     lines = content.split("\n")
@@ -69,7 +99,8 @@ def cmd_init(args):
         print(f"Warning: Existing workflow found for Issue #{old.get('issue')}. Abort it first if stale.", file=sys.stderr)
 
     try:
-        issue = create_issue(repo, title, body, labels=["task"], token=token)
+        backend = create_backend(token)
+        issue = backend.create_issue(repo, title, body, labels=["task"])
     except Exception as e:
         print(f"Error creating issue: {e}", file=sys.stderr)
         sys.exit(1)
@@ -128,7 +159,9 @@ def cmd_finish(_args):
     issue_number = state["issue"]
     token = get_github_token()
 
-    if not token:
+    # Check backend availability
+    backend_info = get_backend_info()
+    if not backend_info["gh_available"] and not token:
         print("Error: GitHub token not found.", file=sys.stderr)
         sys.exit(1)
 
@@ -156,8 +189,9 @@ def cmd_finish(_args):
     comment = "\n".join(comment_lines)
 
     try:
-        add_comment(repo, issue_number, comment, token=token)
-        update_issue(repo, issue_number, state="closed", token=token)
+        backend = create_backend(token)
+        backend.add_comment(repo, issue_number, comment)
+        backend.update_issue(repo, issue_number, state="closed")
         print(f"Updated and closed Issue #{issue_number}")
 
         # Update local tracing

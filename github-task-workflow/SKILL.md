@@ -13,7 +13,11 @@ supported_agents:
 
 通过 GitHub Issues 管理任务的全生命周期：读取、创建、实现、更新、提交。
 
+> **性能优化**：本 Skill 优先使用 GitHub CLI (`gh`) 进行操作，在没有安装 `gh` 时自动回退到 REST API。使用 `gh` 可以获得更好的性能和可靠性。
+
 > 本 Skill 兼容 Claude Code、Kimi CLI、Codex 和 OpenCode。
+
+> **替代方案**：如果你不需要 GitHub 集成，可以使用 [local-workflow](../local-workflow/SKILL.md) 进行纯本地任务追踪。
 
 ## 使用方式
 
@@ -179,7 +183,29 @@ python github-task-workflow/scripts/create_issue.py --repo "owner/other-repo" --
 
 ## 配置 GitHub Token
 
-脚本按以下优先级读取 Token：
+脚本优先使用 **GitHub CLI (`gh`)** 进行操作，在没有安装 `gh` 时会自动回退到 REST API。
+
+### GitHub CLI（推荐）
+
+如果已安装 `gh` 并登录，脚本会自动使用它：
+
+```bash
+# 安装 GitHub CLI
+# macOS: brew install gh
+# 其他系统: https://cli.github.com/
+
+# 登录（只需一次）
+gh auth login
+```
+
+使用 `gh` 的优势：
+- 无需额外配置 Token
+- 更好的性能和可靠性
+- 自动处理认证
+
+### REST API 回退
+
+如果没有安装 `gh`，脚本会按以下优先级读取 Token：
 
 1. **命令行参数**：`--token ghp_xxx`
 2. **环境变量**：`export GITHUB_TOKEN="ghp_xxx"`
