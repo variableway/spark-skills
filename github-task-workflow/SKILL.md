@@ -60,9 +60,11 @@ kimi --agent-file github-task-workflow/agent/kimi-agent.yaml
 flowchart TD
     BEGIN([BEGIN]) --> READ[读取 task 文件，解析标题、描述和附加指令]
     READ --> CREATE[调用 create_issue.py 创建 GitHub Issue 并记录编号]
-    CREATE --> IMPLEMENT[执行代码修改、测试，直到通过]
+    CREATE --> TRACE_INIT[调用 tracing.py init 记录原始内容和解析内容]
+    TRACE_INIT --> IMPLEMENT[执行代码修改、测试，直到通过]
     IMPLEMENT --> UPDATE[调用 update_issue.py 添加完成总结并关闭 Issue]
-    UPDATE --> COMMIT[执行 git add / commit / push 提交代码]
+    UPDATE --> TRACE_FINISH[调用 tracing.py finish 追加更新内容]
+    TRACE_FINISH --> COMMIT[执行 git add / commit / push 提交代码]
     COMMIT --> END([END])
 ```
 
@@ -214,6 +216,44 @@ github:
 - **post-commit**: 自动向关联的 GitHub Issue 添加提交评论
 
 分支名格式：`42-feature-name`（以 Issue 编号开头）
+
+## 本地任务追踪 (Tracing)
+
+工作流执行时自动在本地 `tracing/` 目录记录任务过程，与 GitHub Issue 同步。
+
+### 功能
+
+1. **任务创建时**：记录 Task 原始内容和 Agent 解析后的内容
+2. **任务完成时**：追加 Issue 更新内容到同一文件
+3. **文件命名**：按 task 文件名命名（如 `tracing/tracing.md`），支持追加
+
+### 手动使用
+
+```bash
+# 初始化追踪记录
+python github-task-workflow/scripts/tracing.py init \
+  --task tasks/features/my-feature.md \
+  --issue 7 \
+  --parsed "Agent解析后的内容"
+
+# 完成追踪记录
+python github-task-workflow/scripts/tracing.py finish \
+  --task tasks/features/my-feature.md \
+  --issue 7 \
+  --comment "## 实现总结\n\n- 修改了 xxx.py\n- 添加了 yyy 功能"
+
+# 查看所有追踪记录
+python github-task-workflow/scripts/tracing.py status
+```
+
+| 参数 | 说明 |
+|------|------|
+| `--task` | Task 文件路径（必填） |
+| `--issue` | GitHub Issue 编号（必填） |
+| `--parsed` | Agent 解析后的任务内容（init 可选） |
+| `--comment` | 完成时追加的 Issue 更新内容（finish 可选） |
+
+编排器模式下（`orchestrate.py init/finish`）会自动调用 tracing，无需手动执行。
 
 ## 完整命令示例
 

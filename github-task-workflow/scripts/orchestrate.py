@@ -22,6 +22,15 @@ from update_issue import update_issue, add_comment
 
 STATE_FILE = Path(".github-task-workflow.state.json")
 
+# Import tracing module
+from tracing import cmd_init as tracing_init, cmd_finish as tracing_finish
+
+
+class _TracingArgs:
+    """Minimal args namespace for tracing calls."""
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
 
 def _ensure_repo_and_token():
     repo = get_git_remote()
@@ -74,6 +83,17 @@ def cmd_init(args):
         "status": "created"
     }
     STATE_FILE.write_text(json.dumps(state, indent=2))
+
+    # Initialize local tracing
+    try:
+        tracing_args = _TracingArgs(
+            task=str(task_path),
+            issue=issue["number"],
+            parsed=args.instructions or ""
+        )
+        tracing_init(tracing_args)
+    except Exception as e:
+        print(f"Tracing init warning: {e}")
 
     print(f"Created Issue #{issue['number']}: {issue.get('html_url', '')}")
     print(f"State saved to: {STATE_FILE}")
@@ -139,6 +159,17 @@ def cmd_finish(_args):
         add_comment(repo, issue_number, comment, token=token)
         update_issue(repo, issue_number, state="closed", token=token)
         print(f"Updated and closed Issue #{issue_number}")
+
+        # Update local tracing
+        try:
+            tracing_args = _TracingArgs(
+                task=state.get("task_file", ""),
+                issue=issue_number,
+                comment=comment
+            )
+            tracing_finish(tracing_args)
+        except Exception as e:
+            print(f"Tracing finish warning: {e}")
     except Exception as e:
         print(f"Error updating issue: {e}", file=sys.stderr)
         sys.exit(1)
