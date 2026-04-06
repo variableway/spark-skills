@@ -82,6 +82,49 @@ flowchart TD
 - `git commit -m "..."`
 - `git push`
 
+## AI Agent Protocol 支持
+
+Local Workflow 支持 **AI Agent Protocol**，自动捕获 AI Agent 的执行输出：
+
+### 工作原理
+
+1. **初始化时**设置环境变量：
+   ```bash
+   TASK_WORKFLOW_MODE=local
+   TASK_CAPTURE_OUTPUT=true
+   TASK_OUTPUT_FILE=.task-output.md
+   ```
+
+2. **AI Agent 执行**时写入结构化输出到 `.task-output.md`
+
+3. **完成时**自动捕获并追加到 tracing 文件
+
+### AI Agent 输出格式
+
+AI Agent 应写入 `.task-output.md`：
+
+```markdown
+## Task Execution Summary
+
+### Understanding
+[AI Agent 对任务的理解]
+
+### Actions Taken
+1. [动作 1]
+2. [动作 2]
+
+### Files Modified
+| File | Changes |
+|------|---------|
+| `path/to/file` | [描述] |
+
+### Results
+- **Status**: ✅ Completed
+- **Tests**: [测试结果]
+```
+
+详见：[AI Agent Protocol 文档](../docs/spec/ai-agent-protocol.md)
+
 ## 与 GitHub Workflow 的区别
 
 | 特性 | Local Workflow | GitHub Workflow |
@@ -89,6 +132,7 @@ flowchart TD
 | 需要 GitHub | 否 | 是 |
 | 创建 Issue | 否 | 是 |
 | 追踪位置 | `tasks/tracing/*.md` | GitHub Issue + `tracing/*.md` |
+| AI Agent 输出捕获 | ✅ 支持 | ✅ 支持 |
 | 适用场景 | 本地开发、无网络、私有项目 | 团队协作、需要 GitHub 集成 |
 
 ## 脚本说明
