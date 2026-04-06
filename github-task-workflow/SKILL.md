@@ -1,6 +1,11 @@
 ---
 name: github-task-workflow
-description: 全自动 GitHub 任务工作流：读取 task 文件 -> 创建 Issue -> AI 实现 -> 更新并关闭 Issue -> 提交代码。支持普通对话调用和编排器模式调用。
+description: |
+  全自动 GitHub 任务工作流 Skill。当用户要求"执行"、"运行"、"实现"或"完成"一个 task 文件时（如 `tasks/*.md`、`docs/tasks/*.md`），必须触发本 Skill。
+  
+  触发词："执行 tasks/xxx.md"、"运行 task"、"实现 task"、"work on task"、"完成 tasks/xxx.md"
+  
+  工作流：读取 task 文件 → 创建 GitHub Issue → AI 实现 → 更新并关闭 Issue → 提交代码。
 type: skill
 supported_agents:
   - claude-code
@@ -11,7 +16,14 @@ supported_agents:
 
 # GitHub Task Workflow
 
-通过 GitHub Issues 管理任务的全生命周期：读取、创建、实现、更新、提交。
+## 触发条件（重要！）
+
+**当且仅当**以下情况时，必须执行本 Workflow：
+- 用户说"执行 tasks/xxx.md"、"运行 task"、"实现 task"
+- 用户提到 task 文件路径（如 `tasks/features/*.md`）并要求执行
+- 用户说"work on"、"complete"、"finish" 一个 task
+
+**如果用户没有明确要求 workflow，只是询问 task 内容，则只读取文件不执行 workflow。**
 
 > **性能优化**：本 Skill 优先使用 GitHub CLI (`gh`) 进行操作，在没有安装 `gh` 时自动回退到 REST API。使用 `gh` 可以获得更好的性能和可靠性。
 
@@ -19,20 +31,39 @@ supported_agents:
 
 > **替代方案**：如果你不需要 GitHub 集成，可以使用 [local-workflow](../local-workflow/SKILL.md) 进行纯本地任务追踪。
 
-## 使用方式
+## 自动执行 Workflow（重要！）
 
-### 方式 A：普通对话模式（推荐）
+当检测到用户要求执行 task 文件时，**必须**按以下步骤自动执行，无需用户显式要求：
 
-直接对 AI 说：
+### 强制 Workflow 步骤
 
-> "请执行 `tasks/login-refactor.md`，要求使用 JWT 实现登录，并走完整的 GitHub Task Workflow。"
+1. **READ** - 读取 task 文件
+   - 使用 ReadFile 读取用户指定的 task 文件
+   - 提取标题（第一行去除 `# `）
+   - 记录用户的附加指令
 
-AI 读取本 Skill 后，应自动按以下步骤执行：
-1. 读取 task 文件
-2. 创建 GitHub Issue
-3. 执行代码修改和测试
-4. 更新并关闭 Issue
-5. 提交代码
+2. **CREATE ISSUE** - 创建 GitHub Issue
+   - 运行：`python github-task-workflow/scripts/orchestrate.py init <task-file> [附加指令]`
+   - 这会创建 Issue 并保存状态到 `.github-task-workflow.state.json`
+   - **不要跳过此步骤！**
+
+3. **IMPLEMENT** - 执行任务
+   - 根据 task 内容执行代码修改
+   - 运行测试并修复问题
+
+4. **FINISH** - 完成 workflow
+   - 运行：`python github-task-workflow/scripts/orchestrate.py finish`
+   - 这会更新 Issue、关闭它，并提交代码
+
+### 触发示例
+
+用户说 → 你的动作：
+- "执行 tasks/login.md" → 立即执行上述 4 步 workflow
+- "运行 task features/auth.md" → 立即执行 workflow
+- "实现 tasks/refactor.md" → 立即执行 workflow
+- "完成这个 task" → 立即执行 workflow
+
+**绝对规则：不要只读取文件内容就停止，必须执行完整 workflow！**
 
 ### 方式 B：编排器模式（跨 Agent）
 
