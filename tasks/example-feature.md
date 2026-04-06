@@ -1,15 +1,15 @@
-# Task: Example Feature
+## Task: Example Feature
 
-## Description
+### Description
 
 Describe your feature here.
 
-## Acceptance Criteria
+### Acceptance Criteria
 
 - [ ] Criteria 1
 - [ ] Criteria 2
 - [ ] Criteria 3
 
-## Notes
+### Notes
 
 Add any additional notes here.
