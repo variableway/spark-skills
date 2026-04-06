@@ -1,2 +1,7 @@
 # Local task tracing (execution logs)
 tracing/
+
+# Local workflow state files
+.local-workflow.state.json
+.github-task-workflow.state.json
+.github-task-workflow.active-issue
