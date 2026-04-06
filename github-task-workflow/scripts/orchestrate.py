@@ -21,8 +21,21 @@ from github_backend import create_backend, get_backend_info
 
 STATE_FILE = Path(".github-task-workflow.state.json")
 
-# Import tracing module
+# Import tracing module (legacy tracing in github-task-workflow/tracing.py)
 from tracing import cmd_init as tracing_init, cmd_finish as tracing_finish
+
+# Import local-workflow tracing for dual tracing support
+LOCAL_WORKFLOW_TRACING = Path(__file__).parent.parent.parent / "local-workflow" / "scripts" / "tracing.py"
+if LOCAL_WORKFLOW_TRACING.exists():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("local_tracing", LOCAL_WORKFLOW_TRACING)
+    local_tracing = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(local_tracing)
+    local_tracing_init = local_tracing.cmd_init
+    local_tracing_finish = local_tracing.cmd_finish
+else:
+    local_tracing_init = None
+    local_tracing_finish = None
 
 
 class _TracingArgs:
@@ -115,7 +128,7 @@ def cmd_init(args):
     }
     STATE_FILE.write_text(json.dumps(state, indent=2))
 
-    # Initialize local tracing
+    # Initialize legacy local tracing (tracing/)
     try:
         tracing_args = _TracingArgs(
             task=str(task_path),
@@ -125,6 +138,18 @@ def cmd_init(args):
         tracing_init(tracing_args)
     except Exception as e:
         print(f"Tracing init warning: {e}")
+    
+    # Initialize local-workflow tracing (tasks/tracing/) - dual tracing
+    if local_tracing_init:
+        try:
+            local_tracing_args = _TracingArgs(
+                task=str(task_path),
+                parsed=args.instructions or ""
+            )
+            local_task_id = local_tracing_init(local_tracing_args)
+            print(f"Local-workflow tracing initialized: {local_task_id}")
+        except Exception as e:
+            print(f"Local-workflow tracing init warning: {e}")
 
     print(f"Created Issue #{issue['number']}: {issue.get('html_url', '')}")
     print(f"State saved to: {STATE_FILE}")
@@ -194,7 +219,7 @@ def cmd_finish(_args):
         backend.update_issue(repo, issue_number, state="closed")
         print(f"Updated and closed Issue #{issue_number}")
 
-        # Update local tracing
+        # Update legacy local tracing (tracing/)
         try:
             tracing_args = _TracingArgs(
                 task=state.get("task_file", ""),
@@ -204,6 +229,18 @@ def cmd_finish(_args):
             tracing_finish(tracing_args)
         except Exception as e:
             print(f"Tracing finish warning: {e}")
+        
+        # Update local-workflow tracing (tasks/tracing/) - dual tracing
+        if local_tracing_finish:
+            try:
+                local_tracing_args = _TracingArgs(
+                    task=state.get("task_file", ""),
+                    summary=comment
+                )
+                local_tracing_finish(local_tracing_args)
+                print("Local-workflow tracing updated")
+            except Exception as e:
+                print(f"Local-workflow tracing finish warning: {e}")
     except Exception as e:
         print(f"Error updating issue: {e}", file=sys.stderr)
         sys.exit(1)
