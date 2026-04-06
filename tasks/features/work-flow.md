@@ -9,3 +9,7 @@
 
 - keep current local workflow tracing in github-workflow-skill
 - but separate the local workflow as a skill to support only local tracing without creating an github issues.
+
+## Task 3: Install script review
+
+Please review the skill install script,please make sure it could be install in both system level and project level

@@ -17,7 +17,47 @@
 
 ## 快速安装
 
-### 方式一：使用安装脚本（推荐）
+### 新安装脚本 (install-v2.sh) - 推荐
+
+统一支持**系统级别**和**项目级别**安装：
+
+```bash
+# 查看可用 skills
+./install-v2.sh --list
+
+# ========== 系统级别安装 ==========
+# 安装所有 skills 到系统目录（所有 Agent）
+./install-v2.sh --system --all
+
+# 安装所有 skills 到特定 Agent（如 Kimi）
+./install-v2.sh --system --agent kimi --all
+
+# 安装指定 skills 到系统
+./install-v2.sh --system github-task-workflow local-workflow
+
+# ========== 项目级别安装 ==========
+# 安装所有 skills 到当前项目
+./install-v2.sh --project --all
+
+# 安装指定 skills 到当前项目
+./install-v2.sh --project github-task-workflow
+```
+
+**系统级别安装位置**：
+- `~/.config/agents/skills/` (通用)
+- `~/.claude/skills/` (Claude Code)
+- `~/.kimi/skills/` (Kimi CLI)
+- `~/.codex/skills/` (Codex)
+- `~/.opencode/skills/` (OpenCode)
+
+**项目级别安装位置**：
+- `./.agents/skills/` (通用)
+- `./.kimi/skills/` (Kimi CLI)
+- `./.claude/skills/` (Claude Code)
+- 自动创建 `.kimi/KIMI.md` 项目配置
+- 自动创建 `tasks/` 目录
+
+### 旧安装脚本 (install.sh) - 仅系统级别
 
 ```bash
 # 安装所有 skills 到 Claude Code
@@ -25,29 +65,9 @@
 
 # 安装所有 skills 到 Kimi
 ./install.sh kimi
-
-# 安装所有 skills 到 Codex
-./install.sh codex
-
-# 安装所有 skills 到 OpenCode
-./install.sh opencode
 ```
 
-### 方式二：项目级一键配置
-
-```bash
-# 在当前 git 仓库中自动安装 hooks、配置、GitHub Actions 和示例任务
-bash /path/to/spark-skills/setup-project.sh
-```
-
-这会帮你完成：
-1. 安装 `post-commit` 和 `prepare-commit-msg` Git hooks
-2. 创建 `.github-task-workflow.yaml` 项目配置
-3. 创建 `tasks/` 目录和示例 task 文件
-4. 创建 `.github/workflows/close-issue-on-merge.yml`
-5. 将 skill 安装到 `~/.claude/skills/`、`~/.kimi/skills/` 和 `~/.config/agents/skills/`
-
-### 方式三：手动链接
+### 手动链接
 
 ```bash
 # 以 Claude Code 为例
