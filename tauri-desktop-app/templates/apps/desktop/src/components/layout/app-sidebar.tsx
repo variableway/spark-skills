@@ -12,10 +12,11 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from "@myapp/ui/components/ui/sidebar";
-import { Home, Settings, type LucideIcon } from "lucide-react";
+import { Home, Settings, Terminal, type LucideIcon } from "lucide-react";
 
 const navItems: { title: string; icon: LucideIcon; href: string }[] = [
   { title: "Home", icon: Home, href: "/" },
+  { title: "Terminal", icon: Terminal, href: "/terminal" },
   { title: "Settings", icon: Settings, href: "/settings" },
 ];
 
