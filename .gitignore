@@ -1,4 +1,5 @@
 # Local task tracing (execution logs)
+.claude/local*
 tracing/
 *.pyc
 # Local workflow state files
