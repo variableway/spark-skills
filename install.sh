@@ -11,10 +11,10 @@
 #   -h, --help      Show this help message
 #
 # Examples:
-#   ./install-v2.sh --system --all                    # Install all skills to system
-#   ./install-v2.sh --system github-task-workflow     # Install specific skill to system
-#   ./install-v2.sh --project --all                   # Install all skills to current project
-#   ./install-v2.sh --system --agent kimi --all       # Install to kimi directory only
+#   ./install.sh --system --all                    # Install all skills to system
+#   ./install.sh --system github-task-workflow     # Install specific skill to system
+#   ./install.sh --project --all                   # Install all skills to current project
+#   ./install.sh --system --agent kimi --all       # Install to kimi directory only
 
 set -euo pipefail
 
