@@ -142,6 +142,29 @@ cp ai-config/templates/codex/glm.toml ~/.codex/config.toml
 
 详见：[ai-config/SKILL.md](ai-config/SKILL.md)
 
+### `innate-frontend`
+
+统一的 Web 前端开发 Skill，基于 `@innate/ui` 组件库。
+
+**核心能力**：
+- **57 个基础 UI 组件**：Button、Card、Dialog、Table 等（基于 Radix UI + Tailwind CSS v4）
+- **7 个 Landing 区块**：Hero、Features、Pricing、FAQ、Stats、Testimonials、CTA
+- **业务区块**：Auth（LoginForm）、Mail（Inbox/List/Display）、Chat（Interface/MessageList）
+- **OKLCH 主题系统**：语义化色彩变量，支持亮/暗模式
+- **Monorepo 架构**：pnpm workspace + 共享包
+
+**触发词**：创建 Web 应用、新建前端项目、使用 innate-ui 组件
+
+**配合使用**：与 `tauri-desktop-app` Skill 配合可构建桌面应用
+
+详见：[innate-frontend/SKILL.md](innate-frontend/SKILL.md)
+
+### `tauri-desktop-app`
+
+使用 Tauri 2 + Next.js 快速搭建跨平台桌面应用。
+
+详见：[tauri-desktop-app/SKILL.md](tauri-desktop-app/SKILL.md)
+
 ## 仓库结构
 
 ```
@@ -176,6 +199,14 @@ spark-skills/
 │       ├── opencode/                  # OpenCode 模板
 │       ├── cline/                     # Cline 配置说明
 │       └── openclaw/                  # OpenClaw 配置片段
+├── innate-frontend/                   # Skill: Web 前端开发（@innate/ui）
+│   ├── SKILL.md                       # Skill 入口
+│   └── references/                    # 参考文档
+│       ├── component-catalog.md       # 组件清单
+│       └── theme-system.md            # 主题系统说明
+├── tauri-desktop-app/                 # Skill: Tauri 桌面应用开发
+│   ├── SKILL.md                       # Skill 入口
+│   └── templates/                     # 项目模板
 └── ...                                # 未来添加更多 skills
 ```
 
