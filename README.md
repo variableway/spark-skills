@@ -17,30 +17,56 @@
 
 ## 快速安装
 
-### 新安装脚本 (install-v2.sh) - 推荐
+### Windows 安装 (install.ps1) - 推荐
+
+PowerShell 脚本统一支持**系统级别**和**项目级别**安装：
+
+```powershell
+# 查看可用 skills
+.\install.ps1 -List
+
+# ========== 系统级别安装 ==========
+# 安装所有 skills 到系统目录（所有 Agent）
+.\install.ps1 -System -All
+
+# 安装所有 skills 到特定 Agent（如 Kimi）
+.\install.ps1 -System -Agent kimi -All
+
+# 安装指定 skills 到系统
+.\install.ps1 -System -Skills "github-task-workflow","local-workflow"
+
+# ========== 项目级别安装 ==========
+# 安装所有 skills 到当前项目
+.\install.ps1 -Project -All
+
+# 安装指定 skills 到当前项目
+.\install.ps1 -Project -Skills "github-task-workflow"
+```
+
+### Linux/macOS 安装 (install.sh)
 
 统一支持**系统级别**和**项目级别**安装：
 
 ```bash
 # 查看可用 skills
-./install-v2.sh --list
+./install.sh --list
 
 # ========== 系统级别安装 ==========
 # 安装所有 skills 到系统目录（所有 Agent）
-./install-v2.sh --system --all
+./install.sh --system --all
 
 # 安装所有 skills 到特定 Agent（如 Kimi）
-./install-v2.sh --system --agent kimi --all
+./install.sh --system --agent kimi --all
 
 # 安装指定 skills 到系统
-./install-v2.sh --system github-task-workflow local-workflow
+./install.sh --system github-task-workflow local-workflow
 
 # ========== 项目级别安装 ==========
 # 安装所有 skills 到当前项目
-./install-v2.sh --project --all
+./install.sh --project --all
 
 # 安装指定 skills 到当前项目
-./install-v2.sh --project github-task-workflow
+./install.sh --project github-task-workflow
 ```
 
 **系统级别安装位置**：
