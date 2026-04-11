@@ -8,6 +8,7 @@
 
 - [支持的 Agent 工具](./Agents.md) - Claude Code、Codex CLI、Kimi CLI、OpenCode 等
 - [AI 编程工具配置指南](./ai-coding-tools-guide.md) - 详细配置教程
+- [前端技能安装指南](./usage/install-frontend-skills.md) - Web 和桌面应用技能安装与使用
 
 ### 🚀 快速开始
 
@@ -71,7 +72,9 @@ docs/
 ├── index.md                    # 本文件（文档首页）
 ├── README.md                   # 文档索引
 ├── Agents.md                   # Agent 工具介绍
-└── ai-coding-tools-guide.md    # 配置指南
+├── ai-coding-tools-guide.md    # 配置指南
+└── usage/
+    └── install-frontend-skills.md  # 前端技能安装指南
 ```
 
 ---

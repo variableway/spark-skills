@@ -10,6 +10,7 @@
 |------|------|
 | [Agents.md](./Agents.md) | 支持的 AI Agent 工具介绍和配置说明 |
 | [ai-coding-tools-guide.md](./ai-coding-tools-guide.md) | AI 编程工具配置指南（Claude Code、Codex、OpenCode、GLM） |
+| [usage/install-frontend-skills.md](./usage/install-frontend-skills.md) | 前端技能安装指南（Web + 桌面应用） |
 
 ### 快速导航
 
