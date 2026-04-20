@@ -46,6 +46,9 @@ gh repo view --web
 # 创建 Issue
 gh issue create --title "标题" --body "内容" --label "bug"
 
+# 从文件创建 Issue（文件内容为 body）
+gh issue create --title "标题" --body-file ./issue-body.md --label "bug"
+
 # 列出 Issues
 gh issue list
 
@@ -79,6 +82,15 @@ def create_issue(title: str, body: str, labels: list = None):
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     return result.stdout.strip()
 
+def create_issue_from_file(title: str, body_file: str, labels: list = None):
+    """从文件创建 GitHub Issue（文件内容为 body）"""
+    cmd = ["gh", "issue", "create", "--title", title, "--body-file", body_file]
+    if labels:
+        for label in labels:
+            cmd.extend(["--label", label])
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    return result.stdout.strip()
+
 def close_issue(issue_number: int):
     """关闭 Issue"""
     subprocess.run(
@@ -99,6 +111,7 @@ def comment_issue(issue_number: int, body: str):
 | 操作 | 命令 |
 |------|------|
 | 创建 Issue | `gh issue create --title "xxx" --body "yyy"` |
+| 从文件创建 Issue | `gh issue create --title "xxx" --body-file ./file.md` |
 | 关闭 Issue | `gh issue close <number>` |
 | 添加评论 | `gh issue comment <number> --body "xxx"` |
 | 创建仓库 | `gh repo create --public --source=. --push` |
