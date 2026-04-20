@@ -115,3 +115,35 @@ def comment_issue(issue_number: int, body: str):
 | 关闭 Issue | `gh issue close <number>` |
 | 添加评论 | `gh issue comment <number> --body "xxx"` |
 | 创建仓库 | `gh repo create --public --source=. --push` |
+
+## 安装
+
+### 项目级安装
+
+```bash
+# macOS / Linux
+./scripts/install.sh --project
+
+# Windows PowerShell
+.\scripts\install.ps1 -Project
+```
+
+### 系统级安装
+
+```bash
+# macOS / Linux
+./scripts/install.sh --system
+
+# Windows PowerShell
+.\scripts\install.ps1 -System
+```
+
+### 指定 Agent
+
+```bash
+# 仅安装到 Claude Code
+./scripts/install.sh --system --agent claude-code
+
+# Windows
+.\scripts\install.ps1 -System -Agent claude-code
+```

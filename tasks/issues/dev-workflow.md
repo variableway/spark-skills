@@ -67,3 +67,7 @@ local-workflow skill have moved into dev folder
 
 1. 测试claude code 下面git workflow 和local workflow的工作情况
 2. 需要都work，不管是global还是project level，同时验证install.sh 文件的工作情况
+
+## Task 11: update docs
+
+1. 请分析着些skill的对应文档

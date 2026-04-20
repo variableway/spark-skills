@@ -92,3 +92,35 @@ For complete flag reference and advanced patterns, see [references/gh-release-fl
 - **Assets are uploaded after release creation** — if upload fails, the release may exist without assets
 - **Draft releases are not visible publicly** — must publish manually or omit `--draft`
 - `--generate-notes` overrides `--notes`** — don't use both together
+
+## Installation
+
+### Project Level
+
+```bash
+# macOS / Linux
+./scripts/install.sh --project
+
+# Windows PowerShell
+.\scripts\install.ps1 -Project
+```
+
+### System Level
+
+```bash
+# macOS / Linux
+./scripts/install.sh --system
+
+# Windows PowerShell
+.\scripts\install.ps1 -System
+```
+
+### Target Specific Agent
+
+```bash
+# Only install to Claude Code
+./scripts/install.sh --system --agent claude-code
+
+# Windows
+.\scripts\install.ps1 -System -Agent claude-code
+```

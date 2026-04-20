@@ -123,7 +123,7 @@ AI Agent 应写入 `.task-output.md`：
 - **Tests**: [测试结果]
 ```
 
-详见：[AI Agent Protocol 文档](../docs/spec/ai-agent-protocol.md)
+详见：AI Agent Protocol 输出格式（见上方示例）
 
 ## 与 GitHub Workflow 的区别
 
@@ -260,4 +260,40 @@ python local-workflow/scripts/tracing.py finish \
 git add .
 git commit -m "Complete auth refactor with JWT implementation"
 git push
+```
+
+## 安装
+
+### 项目级安装
+
+```bash
+# macOS / Linux
+./scripts/install.sh --project
+
+# Windows PowerShell
+.\scripts\install.ps1 -Project
+```
+
+项目级安装会自动：
+- 创建 symlink 到 `.claude/skills/`、`.agents/skills/`、`.kimi/skills/`
+- 创建或更新 `CLAUDE.md` 加入 local-workflow 使用说明
+
+### 系统级安装
+
+```bash
+# macOS / Linux
+./scripts/install.sh --system
+
+# Windows PowerShell
+.\scripts\install.ps1 -System
+```
+
+### 指定 Agent
+
+```bash
+# 仅安装到 Claude Code
+./scripts/install.sh --system --agent claude-code
+
+# Windows
+.\scripts\install.ps1 -System -Agent claude-code
 ```
