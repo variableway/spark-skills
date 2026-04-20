@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Git Workflow Skill Installer (macOS / Linux)
-# Usage: ./install.sh [--system | --project] [--agent <name>]
+# Usage: ./install.sh [--system | --project] [--agent <name>] [--hooks]
 #
 # Options:
 #   --system        Install to system skill directories
 #   --project       Install to current project directory
 #   --agent <name>  Target specific agent (claude-code, kimi, codex, opencode)
+#   --hooks         Also install git hooks to .git/hooks/
 #   -h, --help      Show this help message
 
 set -euo pipefail
@@ -15,6 +16,7 @@ SKILL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SKILL_NAME="$(basename "$SKILL_ROOT")"
 INSTALL_MODE=""
 TARGET_AGENT=""
+INSTALL_HOOKS=false
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -54,6 +56,10 @@ parse_args() {
             --agent)
                 TARGET_AGENT="$2"
                 shift 2
+                ;;
+            --hooks)
+                INSTALL_HOOKS=true
+                shift
                 ;;
             -h|--help)
                 usage
@@ -187,6 +193,31 @@ install_project() {
     echo "  Skipped: $skipped"
 }
 
+install_hooks() {
+    echo ""
+    echo -e "${BLUE}Installing git hooks...${NC}"
+
+    if [ ! -d ".git/hooks" ]; then
+        echo -e "${YELLOW}Warning: Not a git repository or .git/hooks not found.${NC}"
+        return
+    fi
+
+    local hooks_dir="$SKILL_ROOT/hooks"
+    for hook in prepare-commit-msg post-commit; do
+        local src="$hooks_dir/$hook"
+        local dst=".git/hooks/$hook"
+        if [ -f "$src" ]; then
+            if [ -e "$dst" ] && [ ! -L "$dst" ]; then
+                echo -e "${YELLOW}  [SKIP]${NC} $dst already exists (not overwriting)"
+            else
+                cp "$src" "$dst"
+                chmod +x "$dst"
+                echo -e "${GREEN}  [OK]${NC}   $dst"
+            fi
+        fi
+    done
+}
+
 main() {
     parse_args "$@"
 
@@ -209,6 +240,11 @@ main() {
             install_project
             ;;
     esac
+
+    # Install git hooks if requested
+    if $INSTALL_HOOKS; then
+        install_hooks
+    fi
 
     echo ""
     echo "Skill installed: $SKILL_NAME"

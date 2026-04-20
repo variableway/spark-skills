@@ -154,3 +154,57 @@ python git-workflow/scripts/orchestrate.py abort
 # Windows
 .\scripts\install.ps1 -System -Agent kimi
 ```
+
+## Git Hooks
+
+git-workflow 提供两个 Git Hook，用于自动关联提交和 Issue：
+
+### prepare-commit-msg
+
+当分支名以 Issue 编号开头时（如 `42-feature-login`），自动在提交信息末尾追加 `Refs: #42`。
+
+```bash
+# 安装
+cp git-workflow/hooks/prepare-commit-msg .git/hooks/
+chmod +x .git/hooks/prepare-commit-msg
+```
+
+### post-commit
+
+每次提交后自动在关联的 GitHub Issue 下添加评论，记录提交 hash、消息和分支。
+
+```bash
+# 安装
+cp git-workflow/hooks/post-commit .git/hooks/
+chmod +x .git/hooks/post-commit
+```
+
+## Kimi Hooks
+
+### kimi-auto-issue.sh (PostToolUse)
+
+当在 `tasks/` 目录下写入 `.md` 文件时，自动创建 GitHub Issue。
+
+```bash
+# 在 ~/.kimi/config.toml 中配置
+[[hooks]]
+event = "PostToolUse"
+command = "/path/to/git-workflow/hooks/kimi-auto-issue.sh"
+```
+
+### kimi-stop-update.sh (Stop)
+
+当 Kimi 会话结束时，自动在活跃的 Issue 下添加评论。
+
+```bash
+# 在 ~/.kimi/config.toml 中配置
+[[hooks]]
+event = "Stop"
+command = "/path/to/git-workflow/hooks/kimi-stop-update.sh"
+```
+
+## 相关文档
+
+| 文档 | 说明 |
+|------|------|
+| [references/workflow.md](references/workflow.md) | 工作流详细参考 |

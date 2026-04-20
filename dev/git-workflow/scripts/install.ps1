@@ -15,6 +15,9 @@
 .PARAMETER Agent
     Target specific agent (claude-code, kimi, codex, opencode)
 
+.PARAMETER Hooks
+    Also install git hooks to .git/hooks/
+
 .EXAMPLE
     .\install.ps1 -System
     Install to all system agent directories
@@ -24,14 +27,15 @@
     Install to kimi system directory only
 
 .EXAMPLE
-    .\install.ps1 -Project
-    Install to current project
+    .\install.ps1 -Project -Hooks
+    Install to current project and install git hooks
 #>
 
 param(
     [switch]$System,
     [switch]$Project,
-    [string]$Agent = ""
+    [string]$Agent = "",
+    [switch]$Hooks
 )
 
 $ErrorActionPreference = "Stop"
@@ -207,6 +211,33 @@ function Install-Project {
     Write-Host "  Skipped: $skipped"
 }
 
+function Install-Hooks {
+    Write-Host ""
+    Write-Info "Installing git hooks..."
+
+    $gitHooksDir = Join-Path $PWD ".git\hooks"
+    if (-not (Test-Path $gitHooksDir)) {
+        Write-Warning "Warning: Not a git repository or .git/hooks not found."
+        return
+    }
+
+    $hooksSourceDir = Join-Path $SkillRoot "hooks"
+    $hookNames = @("prepare-commit-msg", "post-commit")
+
+    foreach ($hookName in $hookNames) {
+        $src = Join-Path $hooksSourceDir $hookName
+        $dst = Join-Path $gitHooksDir $hookName
+        if (Test-Path $src) {
+            if ((Test-Path $dst) -and -not ((Get-Item $dst).Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+                Write-Warning "  [SKIP] $dst already exists (not overwriting)"
+            } else {
+                Copy-Item $src $dst -Force
+                Write-Success "  [OK]   $dst"
+            }
+        }
+    }
+}
+
 function Main {
     if (-not $System -and -not $Project) {
         Write-ErrorMsg "Error: Must specify -System or -Project"
@@ -228,6 +259,10 @@ function Main {
     }
     elseif ($Project) {
         Install-Project
+    }
+
+    if ($Hooks) {
+        Install-Hooks
     }
 
     Write-Host ""

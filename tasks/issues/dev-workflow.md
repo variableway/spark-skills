@@ -45,3 +45,15 @@ The skill folder in dev/ folder, the skill name is git-workflow, and clean insta
 1. I have create an cleanup script for cleanup global skill, it is already done.
 2. please install github issue and git workflow skills in local project,then try to a task to trigger this skill for both kimi and claude code
 3. then try to create issue by task input
+
+## Task 7: merge github-task-workflow and git-workflow
+
+1. please check github-task-workflow skill in local project
+2. if the whole skill is same as git-worklfow, please remove github-task-workflow
+
+## Task 8: Add Local Tracking
+1. please add local tracking for git-workflow skill
+2. and also check local tracking only skill works? 
+3. After these two skills worked cleanup github-workflow-skill
+
+local-workflow skill have moved into dev folder

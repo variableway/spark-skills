@@ -22,6 +22,15 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent
 STATE_FILE = Path(".git-workflow.state.json")
 
+sys.path.insert(0, str(SCRIPT_DIR))
+from tracing import cmd_init as tracing_init, cmd_finish as tracing_finish
+
+
+class _TracingArgs:
+    """Minimal args namespace for tracing calls."""
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
 
 def run_script(name: str, args_list: list) -> None:
     """Run a helper script in the same directory."""
@@ -37,6 +46,20 @@ def cmd_init(args):
         "--labels", args.labels,
     ] + (["--repo", args.repo] if args.repo else [])
       + (["--remote", args.remote] if args.remote else []))
+
+    # Initialize local tracing
+    try:
+        state = json.loads(STATE_FILE.read_text())
+        tracing_args = _TracingArgs(
+            issue=state.get("issue"),
+            title=state.get("title"),
+            description=state.get("description"),
+            parsed=args.instructions or ""
+        )
+        tracing_init(tracing_args)
+    except Exception as e:
+        print(f"Tracing init warning: {e}")
+
     print("\n=== NEXT STEP ===")
     print("Please implement the task and run tests.")
     print("After completion, run: python scripts/orchestrate.py finish --message '<summary>'")
@@ -48,6 +71,9 @@ def cmd_finish(args):
         print("Error: No active workflow found. Run 'init' first or provide --issue/--repo.", file=sys.stderr)
         sys.exit(1)
 
+    # Read state BEFORE close_issue deletes it
+    state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+
     cmd_args = ["--message", args.message]
     if args.issue:
         cmd_args += ["--issue", str(args.issue)]
@@ -55,6 +81,18 @@ def cmd_finish(args):
         cmd_args += ["--repo", args.repo]
 
     run_script("close_issue.py", cmd_args)
+
+    # Update local tracing
+    try:
+        tracing_args = _TracingArgs(
+            issue=args.issue or state.get("issue"),
+            title=state.get("title"),
+            summary=args.message
+        )
+        tracing_finish(tracing_args)
+    except Exception as e:
+        print(f"Tracing finish warning: {e}")
+
     print("Workflow complete.")
 
 
@@ -93,6 +131,7 @@ def main():
     p_init.add_argument("--labels", default="task", help="Comma-separated labels")
     p_init.add_argument("--repo", help="Repository (owner/repo). Auto-detected from git remote.")
     p_init.add_argument("--remote", default="origin", help="Git remote name for auto-detection")
+    p_init.add_argument("instructions", nargs="?", default="", help="Additional implementation instructions")
 
     p_finish = sub.add_parser("finish", help="Append completion message to first comment and close issue")
     p_finish.add_argument("--message", required=True, help="Completion message to append")
