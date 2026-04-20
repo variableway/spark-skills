@@ -106,7 +106,9 @@ get_available_folders() {
             done
         fi
     done
-    echo "${folders[@]}"
+    if [[ ${#folders[@]} -gt 0 ]]; then
+        echo "${folders[@]}"
+    fi
 }
 
 # Get list of available skills
