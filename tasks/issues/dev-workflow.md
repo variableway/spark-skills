@@ -39,3 +39,9 @@ The skill folder in dev/ folder, the skill name is git-workflow, and clean insta
 3. Test git workflow skill after create issue by task input
 
 确认git workflow 工作，并且在当前项目工作，是因为在全局起作用的，所以可能先需要删除当前目录的agent的，然后再测试。
+
+## Task 6: Check work locally
+
+1. I have create an cleanup script for cleanup global skill, it is already done.
+2. please install github issue and git workflow skills in local project,then try to a task to trigger this skill for both kimi and claude code
+3. then try to create issue by task input
