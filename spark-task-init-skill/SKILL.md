@@ -22,7 +22,7 @@ spark task init
 ```
 
 This will create:
-- `tasks/features/` - Directory for feature files
+- `tasks/issues/` - Directory for feature files
 - `tasks/config/` - Directory for configuration tasks
 - `tasks/analysis/` - Directory for analysis tasks
 - `tasks/mindstorm/` - Directory for brainstorming tasks

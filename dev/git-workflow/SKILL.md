@@ -3,12 +3,21 @@ name: git-workflow
 description: |
   基于 github-cli-skill 的 GitHub Issue 工作流 Skill。
   输入任务描述 → 创建 Issue → Agent 执行任务（含测试）→ 关闭 Issue 并将完成消息追加到首条评论。
+  TRIGGER: When user asks to "execute task", "执行任务", "implement task", "run task", "complete task",
+  references tasks from a task file (e.g., "Task 9", "Task 3"), or says @tasks/issues/ to execute a specific task.
+  Must be used for ALL task executions — never skip creating the Issue.
 type: skill
 supported_agents:
   - claude-code
   - kimi
   - codex
   - opencode
+triggers:
+  - pattern: "(execute|run|implement|complete|do)\\s*task"
+  - pattern: "执行(任务|Task)"
+  - pattern: "Task\\s*\\d+"
+  - pattern: "@tasks[/\\\\]"
+  - pattern: "完成任务"
 ---
 
 # Git Workflow
@@ -202,6 +211,37 @@ command = "/path/to/git-workflow/hooks/kimi-auto-issue.sh"
 event = "Stop"
 command = "/path/to/git-workflow/hooks/kimi-stop-update.sh"
 ```
+
+## Claude Code 集成
+
+### 自动触发 Hook
+
+安装 `claude-auto-issue.sh` 到项目级 `.claude/settings.json`：
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash dev/git-workflow/hooks/claude-auto-issue.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Hook 会检测任务执行相关的 prompt（如"执行任务"、"execute task"、"Task 9"等），并自动注入上下文提醒 Agent 使用 git-workflow。
+
+### CLAUDE.md 指令
+
+在项目根目录的 `CLAUDE.md` 中添加 git-workflow 指令，确保 Claude Code 在每次会话加载时都能看到任务执行必须走 git-workflow 的规则。
 
 ## 相关文档
 

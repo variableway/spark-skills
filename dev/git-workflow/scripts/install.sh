@@ -218,6 +218,149 @@ install_hooks() {
     done
 }
 
+install_claude_code_hook() {
+    echo ""
+    echo -e "${BLUE}Configuring Claude Code hook (.claude/settings.json)...${NC}"
+
+    local settings_dir=".claude"
+    local settings_file="$settings_dir/settings.json"
+    local hook_script="$SKILL_ROOT/hooks/claude-auto-issue.sh"
+
+    if [ ! -f "$hook_script" ]; then
+        echo -e "${YELLOW}  [SKIP] claude-auto-issue.sh not found in skill${NC}"
+        return
+    fi
+
+    mkdir -p "$settings_dir"
+
+    # Use stable symlink path if available, otherwise relative path
+    local hook_cmd
+    if [ -d ".claude/skills/$SKILL_NAME" ]; then
+        hook_cmd="bash .claude/skills/$SKILL_NAME/hooks/claude-auto-issue.sh"
+    else
+        local skill_rel_path
+        skill_rel_path=$(python3 -c "
+import os.path
+print(os.path.relpath('$SKILL_ROOT', '$PWD'))
+" 2>/dev/null || echo "dev/git-workflow")
+        hook_cmd="bash $skill_rel_path/hooks/claude-auto-issue.sh"
+    fi
+
+    if [ -f "$settings_file" ]; then
+        # Merge hooks into existing settings.json
+        python3 -c "
+import json, sys
+with open('$settings_file', 'r') as f:
+    settings = json.load(f)
+
+hook_config = {
+    'UserPromptSubmit': [
+        {
+            'matcher': '*',
+            'hooks': [
+                {
+                    'type': 'command',
+                    'command': '$hook_cmd',
+                    'timeout': 10
+                }
+            ]
+        }
+    ]
+}
+
+if 'hooks' not in settings:
+    settings['hooks'] = {}
+settings['hooks'].update(hook_config)
+
+with open('$settings_file', 'w') as f:
+    json.dump(settings, f, indent=2)
+    f.write('\n')
+" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}  [OK]${NC}   Updated $settings_file with UserPromptSubmit hook"
+        else
+            echo -e "${RED}  [ERROR]${NC} Failed to update $settings_file"
+        fi
+    else
+        # Create new settings.json
+        cat > "$settings_file" <<SETTINGS
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$hook_cmd",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+SETTINGS
+        echo -e "${GREEN}  [OK]${NC}   Created $settings_file with UserPromptSubmit hook"
+    fi
+}
+
+install_claude_md() {
+    echo ""
+    echo -e "${BLUE}Creating CLAUDE.md with git-workflow instructions...${NC}"
+
+    local claude_md="CLAUDE.md"
+
+    if [ -f "$claude_md" ] && grep -q "git-workflow" "$claude_md" 2>/dev/null; then
+        echo -e "${YELLOW}  [SKIP]${NC} CLAUDE.md already contains git-workflow instructions"
+        return
+    fi
+
+    # Determine relative path — prefer stable symlink path
+    local skill_rel_path
+    if [ -d ".claude/skills/$SKILL_NAME" ]; then
+        skill_rel_path=".claude/skills/$SKILL_NAME"
+    else
+        skill_rel_path=$(python3 -c "
+import os.path
+print(os.path.relpath('$SKILL_ROOT', '$PWD'))
+" 2>/dev/null || echo "dev/git-workflow")
+    fi
+
+    local workflow_block='## Task Execution Workflow
+
+When the user asks to **execute a task**, **implement a task**, or **run a task** (e.g., "请执行Task 9", "execute Task 3"), you MUST use the `git-workflow` skill:
+
+1. **INIT** — Create a GitHub Issue:
+   ```bash
+   python '"$skill_rel_path"'/scripts/orchestrate.py init --title "<task title>" --description "<task description>"
+   ```
+
+2. **IMPLEMENT** — Execute the task (code changes, tests, etc.)
+
+3. **FINISH** — Append completion message and close the Issue:
+   ```bash
+   python '"$skill_rel_path"'/scripts/orchestrate.py finish --message "<completion summary>"
+   ```
+
+This applies to all tasks referenced from task files (e.g., `tasks/issues/dev-workflow.md`).
+
+**Do NOT skip the workflow** — always create an Issue first, then close it after completion.
+'
+
+    if [ -f "$claude_md" ]; then
+        # Append to existing CLAUDE.md
+        echo "" >> "$claude_md"
+        echo "$workflow_block" >> "$claude_md"
+        echo -e "${GREEN}  [OK]${NC}   Appended git-workflow instructions to $claude_md"
+    else
+        echo "# Project Instructions" > "$claude_md"
+        echo "" >> "$claude_md"
+        echo "$workflow_block" >> "$claude_md"
+        echo -e "${GREEN}  [OK]${NC}   Created $claude_md with git-workflow instructions"
+    fi
+}
+
 main() {
     parse_args "$@"
 
@@ -238,6 +381,9 @@ main() {
             ;;
         project)
             install_project
+            # Always configure Claude Code integration for project installs
+            install_claude_code_hook
+            install_claude_md
             ;;
     esac
 

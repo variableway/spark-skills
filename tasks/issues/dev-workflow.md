@@ -57,3 +57,13 @@ The skill folder in dev/ folder, the skill name is git-workflow, and clean insta
 3. After these two skills worked cleanup github-workflow-skill
 
 local-workflow skill have moved into dev folder
+
+## Task 9: Testing Create Github Relese Skill
+
+1. check current skills，gh-create-release skill
+2. if existing，please test it in this reo
+
+## Task 10: 测试claude code 下面git workflow 和local workflow的工作情况
+
+1. 测试claude code 下面git workflow 和local workflow的工作情况
+2. 需要都work，不管是global还是project level，同时验证install.sh 文件的工作情况

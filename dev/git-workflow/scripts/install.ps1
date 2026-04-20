@@ -238,6 +238,127 @@ function Install-Hooks {
     }
 }
 
+function Install-ClaudeCodeHook {
+    Write-Host ""
+    Write-Info "Configuring Claude Code hook (.claude/settings.json)..."
+
+    $settingsDir = Join-Path $PWD ".claude"
+    $settingsFile = Join-Path $settingsDir "settings.json"
+    $hookScript = Join-Path $SkillRoot "hooks\claude-auto-issue.sh"
+
+    if (-not (Test-Path $hookScript)) {
+        Write-Warning "  [SKIP] claude-auto-issue.sh not found in skill"
+        return
+    }
+
+    # Determine relative path
+    $skillRelPath = Resolve-Path -Relative $SkillRoot
+    $hookCmd = "bash $skillRelPath/hooks/claude-auto-issue.sh"
+
+    if (Test-Path $settingsFile) {
+        # Merge hooks into existing settings.json
+        try {
+            $settings = Get-Content $settingsFile -Raw | ConvertFrom-Json
+
+            if (-not ($settings.PSObject.Properties.Name -contains "hooks")) {
+                $settings | Add-Member -NotePropertyName "hooks" -NotePropertyValue @{}
+            }
+
+            $hookConfig = @{
+                UserPromptSubmit = @(
+                    @{
+                        matcher = "*"
+                        hooks = @(
+                            @{
+                                type = "command"
+                                command = $hookCmd
+                                timeout = 10
+                            }
+                        )
+                    }
+                )
+            }
+
+            $settings.hooks = $hookConfig
+            $settings | ConvertTo-Json -Depth 10 | Set-Content $settingsFile
+            Write-Success "  [OK]   Updated $settingsFile with UserPromptSubmit hook"
+        }
+        catch {
+            Write-ErrorMsg "  [ERROR] Failed to update $settingsFile: $_"
+        }
+    }
+    else {
+        New-Item -ItemType Directory -Path $settingsDir -Force | Out-Null
+
+        $settings = @{
+            hooks = @{
+                UserPromptSubmit = @(
+                    @{
+                        matcher = "*"
+                        hooks = @(
+                            @{
+                                type = "command"
+                                command = $hookCmd
+                                timeout = 10
+                            }
+                        )
+                    }
+                )
+            }
+        }
+
+        $settings | ConvertTo-Json -Depth 10 | Set-Content $settingsFile
+        Write-Success "  [OK]   Created $settingsFile with UserPromptSubmit hook"
+    }
+}
+
+function Install-ClaudeMD {
+    Write-Host ""
+    Write-Info "Creating CLAUDE.md with git-workflow instructions..."
+
+    $claudeMd = Join-Path $PWD "CLAUDE.md"
+
+    if ((Test-Path $claudeMd) -and ((Get-Content $claudeMd -Raw) -match "git-workflow")) {
+        Write-Warning "  [SKIP] CLAUDE.md already contains git-workflow instructions"
+        return
+    }
+
+    $skillRelPath = Resolve-Path -Relative $SkillRoot
+
+    $workflowBlock = @"
+
+## Task Execution Workflow
+
+When the user asks to **execute a task**, **implement a task**, or **run a task** (e.g., "execute Task 9"), you MUST use the `git-workflow` skill:
+
+1. **INIT** -- Create a GitHub Issue:
+   ``````bash
+   python $skillRelPath/scripts/orchestrate.py init --title "<task title>" --description "<task description>"
+   ``````
+
+2. **IMPLEMENT** -- Execute the task (code changes, tests, etc.)
+
+3. **FINISH** -- Append completion message and close the Issue:
+   ``````bash
+   python $skillRelPath/scripts/orchestrate.py finish --message "<completion summary>"
+   ``````
+
+This applies to all tasks referenced from task files.
+
+**Do NOT skip the workflow** -- always create an Issue first, then close it after completion.
+"@
+
+    if (Test-Path $claudeMd) {
+        Add-Content $claudeMd $workflowBlock
+        Write-Success "  [OK]   Appended git-workflow instructions to CLAUDE.md"
+    }
+    else {
+        Set-Content $claudeMd "# Project Instructions"
+        Add-Content $claudeMd $workflowBlock
+        Write-Success "  [OK]   Created CLAUDE.md with git-workflow instructions"
+    }
+}
+
 function Main {
     if (-not $System -and -not $Project) {
         Write-ErrorMsg "Error: Must specify -System or -Project"
@@ -259,6 +380,9 @@ function Main {
     }
     elseif ($Project) {
         Install-Project
+        # Always configure Claude Code integration for project installs
+        Install-ClaudeCodeHook
+        Install-ClaudeMD
     }
 
     if ($Hooks) {
