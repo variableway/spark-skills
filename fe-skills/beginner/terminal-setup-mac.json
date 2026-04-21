@@ -1,0 +1,71 @@
+{
+  "id": "terminal-setup-mac",
+  "name": "Mac Terminal环境配置",
+  "version": "1.0.0",
+  "description": "为Mac用户安装和配置Terminal工具，包括iTerm2、Zsh、Oh My Zsh等",
+  "level": "beginner",
+  "platform": ["macos"],
+  "prerequisites": [
+    "Mac电脑 (macOS 10.15或更高版本)",
+    "网络连接"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "安装Homebrew",
+      "description": "安装Mac包管理器",
+      "action": {
+        "type": "script",
+        "command": "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"",
+        "expected_output": "Installation successful",
+        "documentation": "docs/guides/terminal-setup-mac.md#前置要求"
+      }
+    },
+    {
+      "order": 2,
+      "title": "安装Terminal应用",
+      "description": "安装iTerm2和Warp",
+      "action": {
+        "type": "script",
+        "command": "brew install --cask iterm2 warp",
+        "documentation": "docs/guides/terminal-setup-mac.md#推荐的三个terminal工具"
+      }
+    },
+    {
+      "order": 3,
+      "title": "配置Zsh和Oh My Zsh",
+      "description": "安装Zsh和Oh My Zsh配置框架",
+      "action": {
+        "type": "script",
+        "command": "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"",
+        "documentation": "docs/guides/terminal-setup-mac.md#shell增强工具"
+      }
+    },
+    {
+      "order": 4,
+      "title": "安装实用工具",
+      "description": "安装tmux、autojump、fzf等工具",
+      "action": {
+        "type": "script",
+        "command": "brew install tmux autojump tree htop fzf bat ripgrep",
+        "documentation": "docs/guides/terminal-setup-mac.md#实用工具"
+      }
+    },
+    {
+      "order": 5,
+      "title": "验证安装",
+      "description": "验证所有工具是否正确安装",
+      "action": {
+        "type": "verification",
+        "command": "scripts/install/install-terminal-tools-mac.sh verify",
+        "expected_output": "All tools installed successfully"
+      }
+    }
+  ],
+  "estimated_time": "15-30分钟",
+  "tags": ["terminal", "macos", "beginner", "productivity"],
+  "automation": {
+    "full_script": "scripts/install/install-terminal-tools-mac.sh",
+    "documentation": "docs/guides/terminal-setup-usage.md"
+  }
+}

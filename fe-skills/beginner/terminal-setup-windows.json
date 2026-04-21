@@ -1,0 +1,82 @@
+{
+  "id": "terminal-setup-windows",
+  "name": "Windows Terminal环境配置",
+  "version": "1.0.0",
+  "description": "为Windows用户安装和配置Terminal工具，包括Windows Terminal、PowerShell 7、Oh My Posh等",
+  "level": "beginner",
+  "platform": ["windows"],
+  "prerequisites": [
+    "Windows 10/11电脑",
+    "管理员权限",
+    "网络连接"
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "title": "安装winget",
+      "description": "确保winget包管理器可用",
+      "action": {
+        "type": "script",
+        "command": "winget --version",
+        "expected_output": "v1.x.x",
+        "documentation": "docs/guides/terminal-setup-windows.md#前置要求"
+      }
+    },
+    {
+      "order": 2,
+      "title": "安装Windows Terminal",
+      "description": "安装微软官方Terminal",
+      "action": {
+        "type": "script",
+        "command": "winget install Microsoft.WindowsTerminal",
+        "documentation": "docs/guides/terminal-setup-windows.md#推荐的三个terminal工具"
+      }
+    },
+    {
+      "order": 3,
+      "title": "安装PowerShell 7",
+      "description": "安装最新版PowerShell",
+      "action": {
+        "type": "script",
+        "command": "winget install Microsoft.PowerShell",
+        "documentation": "docs/guides/terminal-setup-windows.md#shell增强工具"
+      }
+    },
+    {
+      "order": 4,
+      "title": "安装Oh My Posh",
+      "description": "安装PowerShell美化工具",
+      "action": {
+        "type": "script",
+        "command": "winget install JanDeDobbeleer.OhMyPosh",
+        "documentation": "docs/guides/terminal-setup-windows.md#shell增强工具"
+      }
+    },
+    {
+      "order": 5,
+      "title": "安装实用工具",
+      "description": "安装Git、fzf、bat、ripgrep等工具",
+      "action": {
+        "type": "script",
+        "command": "winget install Git.Git junegunn.fzf sharkdp.bat BurntSushi.ripgrep.MSVC ajeetdsouza.zoxide",
+        "documentation": "docs/guides/terminal-setup-windows.md#实用工具"
+      }
+    },
+    {
+      "order": 6,
+      "title": "验证安装",
+      "description": "验证所有工具是否正确安装",
+      "action": {
+        "type": "verification",
+        "command": "scripts/install/install-terminal-tools-windows.ps1 -Verify",
+        "expected_output": "All tools installed successfully"
+      }
+    }
+  ],
+  "estimated_time": "15-30分钟",
+  "tags": ["terminal", "windows", "beginner", "productivity"],
+  "automation": {
+    "full_script": "scripts/install/install-terminal-tools-windows.ps1",
+    "documentation": "docs/guides/terminal-setup-usage.md"
+  }
+}
