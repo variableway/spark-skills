@@ -96,15 +96,14 @@ parse_args() {
 get_available_folders() {
     local folders=()
     for dir in "$SCRIPT_DIR"/*/; do
-        if [[ -d "$dir" ]] && [[ -d "$dir"/*/ ]]; then
-            # Check if subdirectory contains SKILL.md
-            for subdir in "$dir"*/; do
-                if [[ -f "$subdir/SKILL.md" ]]; then
-                    folders+=("$(basename "$dir")")
-                    break
-                fi
-            done
-        fi
+        [[ -d "$dir" ]] || continue
+        # Check if any subdirectory contains SKILL.md
+        for subdir in "$dir"*/; do
+            if [[ -f "$subdir/SKILL.md" ]]; then
+                folders+=("$(basename "$dir")")
+                break
+            fi
+        done
     done
     if [[ ${#folders[@]} -gt 0 ]]; then
         echo "${folders[@]}"
