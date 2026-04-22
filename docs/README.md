@@ -12,6 +12,14 @@
 | [ai-coding-tools-guide.md](./ai-coding-tools-guide.md) | AI 编程工具配置指南（Claude Code、Codex、OpenCode、GLM） |
 | [usage/install-frontend-skills.md](./usage/install-frontend-skills.md) | 前端技能安装指南（Web + 桌面应用） |
 
+### 规范文档
+
+| 文档 | 说明 |
+|------|------|
+| [spec/auto-doc-update-proposal.md](./spec/auto-doc-update-proposal.md) | 任务完成后自动文档更新方案设计 |
+| [spec/ai-agent-protocol.md](./spec/ai-agent-protocol.md) | AI Agent 通用协议定义 |
+| [spec/agent-communication-protocols.md](./spec/agent-communication-protocols.md) | Agent 间通信协议 |
+
 ### 快速导航
 
 #### 新手入门

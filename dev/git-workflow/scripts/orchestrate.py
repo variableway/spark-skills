@@ -82,6 +82,19 @@ def cmd_finish(args):
 
     run_script("close_issue.py", cmd_args)
 
+    # Doc update check
+    doc_message = ""
+    try:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT_DIR / "doc_checker.py"), "--markdown"],
+            capture_output=True, text=True, check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            doc_message = "\n\n" + result.stdout.strip()
+            print(doc_message.strip())
+    except Exception:
+        pass
+
     # Update local tracing
     try:
         tracing_args = _TracingArgs(

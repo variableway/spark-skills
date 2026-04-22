@@ -1,0 +1,39 @@
+#!/bin/sh
+# Git post-commit hook: auto-comment to GitHub issue + doc update check.
+#
+# Install:
+#   cp hooks/post-commit .git/hooks/post-commit
+#   chmod +x .git/hooks/post-commit
+#
+# Assumes branch names may start with issue number, e.g. "42-feature-login".
+
+# --- Issue auto-comment (only when branch has issue number) ---
+ISSUE=$(git branch --show-current | grep -oE '^[0-9]+' | head -n 1)
+if [ -n "$ISSUE" ]; then
+    COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+    COMMIT_HASH=$(git log -1 --pretty=format:"%h")
+    BRANCH=$(git branch --show-current)
+
+    REPO_ROOT="$(git rev-parse --show-toplevel)"
+    SKILL_DIR="$REPO_ROOT/github-task-workflow"
+
+    cd "$REPO_ROOT" || exit 0
+
+    python "$SKILL_DIR/scripts/update_issue.py" \
+      --issue "$ISSUE" \
+      --comment "### New Commit\n\n- **Hash**: \`$COMMIT_HASH\`\n- **Message**: $COMMIT_MSG\n- **Branch**: \`$BRANCH\`" \
+      > /dev/null 2>&1
+fi
+
+# --- Doc update check (always runs) ---
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+DOC_CHECKER="$REPO_ROOT/dev/git-workflow/scripts/doc_checker.py"
+
+if [ -f "$DOC_CHECKER" ]; then
+    cd "$REPO_ROOT" || exit 0
+    OUTPUT=$(python "$DOC_CHECKER" --since HEAD~1 2>/dev/null)
+    if [ -n "$OUTPUT" ]; then
+        echo ""
+        echo "$OUTPUT"
+    fi
+fi

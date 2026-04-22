@@ -12,6 +12,7 @@
 #   --all                 Install all skills found
 #   --list                List available skills
 #   --list-folders        List available skill folders
+#   --hooks               Install git hooks (can be used standalone)
 #   -h, --help            Show this help message
 #
 # Examples:
@@ -29,6 +30,7 @@ TARGET_AGENT=""         # specific agent or empty for all
 INSTALL_ALL=false
 LIST_SKILLS=false
 LIST_FOLDERS=false
+INSTALL_HOOKS=false
 SKILLS_TO_INSTALL=()
 
 # Colors for output
@@ -73,6 +75,10 @@ parse_args() {
                 ;;
             --list-folders)
                 LIST_FOLDERS=true
+                shift
+                ;;
+            --hooks)
+                INSTALL_HOOKS=true
                 shift
                 ;;
             -h|--help)
@@ -448,10 +454,16 @@ main() {
     fi
 
     # Validate install mode
-    if [[ -z "$INSTALL_MODE" ]]; then
-        echo -e "${RED}Error: Must specify --system or --project${NC}" >&2
+    if [[ -z "$INSTALL_MODE" ]] && ! $INSTALL_HOOKS; then
+        echo -e "${RED}Error: Must specify --system or --project (or --hooks alone)${NC}" >&2
         usage
         exit 1
+    fi
+
+    # Hooks-only mode
+    if $INSTALL_HOOKS && [[ -z "$INSTALL_MODE" ]]; then
+        install_hooks
+        return
     fi
 
     # Get skills to install
@@ -481,6 +493,38 @@ main() {
     echo "Installed skills:"
     for skill in "${SKILLS_TO_INSTALL[@]}"; do
         echo "  - $(get_skill_display_name "$skill")"
+    done
+
+    # Install hooks if requested or in project mode
+    if $INSTALL_HOOKS || [[ "$INSTALL_MODE" == "project" ]]; then
+        echo ""
+        install_hooks
+    fi
+}
+
+# Install git hooks from hooks/ directory
+install_hooks() {
+    local hooks_dir="$SCRIPT_DIR/hooks"
+    local git_hooks_dir="$SCRIPT_DIR/.git/hooks"
+
+    if [[ ! -d "$hooks_dir" ]]; then
+        return
+    fi
+
+    if [[ ! -d "$git_hooks_dir" ]]; then
+        echo -e "${YELLOW}Warning: .git/hooks not found. Skipping hook installation.${NC}"
+        return
+    fi
+
+    echo -e "${BLUE}Installing git hooks...${NC}"
+    for hook in "$hooks_dir"/*; do
+        [[ -f "$hook" ]] || continue
+        hook_name=$(basename "$hook")
+        target="$git_hooks_dir/$hook_name"
+
+        cp "$hook" "$target"
+        chmod +x "$target"
+        echo -e "${GREEN}  [OK]${NC}   $hook_name"
     done
 }
 

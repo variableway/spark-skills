@@ -7,6 +7,11 @@
     "doc": "docs"
   },
   "scripts": {
+    "install:fe-skills": "./install.sh --system --folder fe-skills --all",
+    "install:fe-skills:kimi": "./install.sh --system --agent kimi --folder fe-skills --all",
+    "install:fe-skills:project": "./install.sh --project --folder fe-skills --all",
+    "list:folders": "./install.sh --list-folders",
+    "list:fe-skills": "./install.sh --folder fe-skills --list",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

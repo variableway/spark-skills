@@ -43,6 +43,10 @@
     Install to kimi directory only
 
 .EXAMPLE
+    .\install.ps1 -System -Folder fe-skills -All
+    Install all skills from fe-skills folder to system
+
+.EXAMPLE
     .\install.ps1 -List
     List available skills
 #>
@@ -51,8 +55,10 @@ param(
     [switch]$System,
     [switch]$Project,
     [string]$Agent = "",
+    [string]$Folder = "",
     [switch]$All,
     [switch]$List,
+    [switch]$ListFolders,
     [string[]]$Skills
 )
 
@@ -73,23 +79,114 @@ function Write-Warning { param([string]$Message) Write-ColorOutput $Message "Yel
 function Write-Error { param([string]$Message) Write-ColorOutput $Message "Red" }
 function Write-Info { param([string]$Message) Write-ColorOutput $Message "Cyan" }
 
+# Get list of available skill folders
+function Get-AvailableFolders {
+    $folders = @()
+    Get-ChildItem -Path $ScriptDir -Directory | ForEach-Object {
+        $dir = $_.FullName
+        $hasSkill = $false
+        Get-ChildItem -Path $dir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            $skillMdPath = Join-Path $_.FullName "SKILL.md"
+            if (Test-Path $skillMdPath) {
+                $hasSkill = $true
+            }
+        }
+        if ($hasSkill) {
+            $folders += $_.Name
+        }
+    }
+    return $folders
+}
+
 # Get list of available skills
 function Get-AvailableSkills {
+    param([string]$TargetFolder = "")
+
     $skills = @()
-    Get-ChildItem -Path $ScriptDir -Directory | ForEach-Object {
+    $searchDir = $ScriptDir
+
+    if ($TargetFolder -ne "") {
+        $searchDir = Join-Path $ScriptDir $TargetFolder
+        if (-not (Test-Path $searchDir)) {
+            Write-Error "Error: Folder not found: $TargetFolder"
+            exit 1
+        }
+    }
+
+    Get-ChildItem -Path $searchDir -Directory | ForEach-Object {
         $skillMdPath = Join-Path $_.FullName "SKILL.md"
         if (Test-Path $skillMdPath) {
-            $skills += $_.Name
+            if ($TargetFolder -ne "") {
+                $skills += "$TargetFolder/$($_.Name)"
+            } else {
+                $skills += $_.Name
+            }
         }
     }
     return $skills
 }
 
+# List available folders
+function Show-Folders {
+    Write-Info "Available skill folders:"
+    $folders = Get-AvailableFolders
+    if ($folders.Count -eq 0) {
+        Write-Host "  (none - all skills are in root directory)"
+    } else {
+        foreach ($folder in $folders) {
+            $count = (Get-ChildItem -Path (Join-Path $ScriptDir $folder) -Recurse -Filter "SKILL.md" | Measure-Object).Count
+            Write-Host "  📁 $folder ($count skills)"
+        }
+    }
+
+    Write-Host ""
+    Write-Info "Root directory skills:"
+    $rootSkills = @()
+    Get-ChildItem -Path $ScriptDir -Directory | ForEach-Object {
+        $skillMdPath = Join-Path $_.FullName "SKILL.md"
+        if (Test-Path $skillMdPath) {
+            $rootSkills += $_.Name
+        }
+    }
+    if ($rootSkills.Count -eq 0) {
+        Write-Host "  (none)"
+    } else {
+        foreach ($skill in $rootSkills) {
+            Write-Host "  📄 $skill"
+        }
+    }
+}
+
 # List available skills
 function Show-Skills {
-    Write-Info "Available skills:"
-    Get-AvailableSkills | ForEach-Object {
-        Write-Host "  - $_"
+    param([string]$TargetFolder = "")
+
+    if ($TargetFolder -ne "") {
+        Write-Info "Available skills in '$TargetFolder':"
+    } else {
+        Write-Info "Available skills:"
+    }
+
+    $skills = Get-AvailableSkills -TargetFolder $TargetFolder
+    if ($skills.Count -eq 0) {
+        Write-Host "  (none found)"
+    } else {
+        foreach ($skill in $skills) {
+            $skillPath = Join-Path $ScriptDir $skill
+            $desc = ""
+            $skillMdPath = Join-Path $skillPath "SKILL.md"
+            if (Test-Path $skillMdPath) {
+                $line = Get-Content $skillMdPath | Select-Object -First 1
+                if ($line -match "^description:\s*(.+)$") {
+                    $desc = $matches[1].Substring(0, [Math]::Min(50, $matches[1].Length))
+                }
+            }
+            if ($desc -ne "") {
+                Write-Host "  📄 $skill - $desc..."
+            } else {
+                Write-Host "  📄 $skill"
+            }
+        }
     }
 }
 
@@ -198,17 +295,47 @@ function New-SkillLink {
     }
 }
 
+# Get skill source path
+function Get-SkillSource {
+    param([string]$SkillName)
+
+    if ($SkillName -match "/") {
+        return Join-Path $ScriptDir $SkillName
+    } else {
+        if ($Folder -ne "") {
+            $folderPath = Join-Path $ScriptDir $Folder $SkillName
+            $folderSkillMd = Join-Path $folderPath "SKILL.md"
+            if ((Test-Path $folderPath) -and (Test-Path $folderSkillMd)) {
+                return $folderPath
+            }
+        }
+        $rootPath = Join-Path $ScriptDir $SkillName
+        $rootSkillMd = Join-Path $rootPath "SKILL.md"
+        if ((Test-Path $rootPath) -and (Test-Path $rootSkillMd)) {
+            return $rootPath
+        }
+        return $null
+    }
+}
+
+# Get skill display name
+function Get-SkillDisplayName {
+    param([string]$SkillName)
+    return Split-Path -Leaf $SkillName
+}
+
 # Install skill to target directory
 function Install-SkillToDir {
     param(
         [string]$SkillName,
+        [string]$SkillSrc,
         [string]$TargetDir
     )
 
-    $skillSrc = Join-Path $ScriptDir $SkillName
-    $linkPath = Join-Path $TargetDir $SkillName
+    $displayName = Get-SkillDisplayName $SkillName
+    $linkPath = Join-Path $TargetDir $displayName
 
-    return New-SkillLink -SourcePath $skillSrc -LinkPath $linkPath
+    return New-SkillLink -SourcePath $SkillSrc -LinkPath $linkPath
 }
 
 # System-level installation
@@ -216,6 +343,10 @@ function Install-System {
     param([string[]]$SkillsToInstall)
 
     Write-Info "Installing skills to system directories..."
+
+    if ($Folder -ne "") {
+        Write-Info "Source folder: $Folder"
+    }
 
     $targetDirs = Get-SystemTargetDirs -TargetAgent $Agent
     $installedCount = 0
@@ -225,17 +356,16 @@ function Install-System {
         Write-Host ""
         Write-Host "Installing: $skillName"
 
-        $skillSrc = Join-Path $ScriptDir $skillName
-        $skillMdPath = Join-Path $skillSrc "SKILL.md"
-
-        if (-not (Test-Path $skillSrc) -or -not (Test-Path $skillMdPath)) {
+        $skillSrc = Get-SkillSource $skillName
+        if ($null -eq $skillSrc) {
             Write-Error "  [ERROR] Skill not found: $skillName"
             continue
         }
 
+        $displayName = Get-SkillDisplayName $skillName
         $skillInstalled = $false
         foreach ($targetDir in $targetDirs) {
-            $result = Install-SkillToDir -SkillName $skillName -TargetDir $targetDir
+            $result = Install-SkillToDir -SkillName $skillName -SkillSrc $skillSrc -TargetDir $targetDir
             if ($result) {
                 $skillInstalled = $true
             }
@@ -261,6 +391,10 @@ function Install-Project {
 
     Write-Info "Installing skills to project directories..."
 
+    if ($Folder -ne "") {
+        Write-Info "Source folder: $Folder"
+    }
+
     # Check if we're in a git repository
     if (-not (Test-Path ".git")) {
         Write-Warning "Warning: Current directory is not a git repository."
@@ -278,17 +412,16 @@ function Install-Project {
         Write-Host ""
         Write-Host "Installing: $skillName"
 
-        $skillSrc = Join-Path $ScriptDir $skillName
-        $skillMdPath = Join-Path $skillSrc "SKILL.md"
-
-        if (-not (Test-Path $skillSrc) -or -not (Test-Path $skillMdPath)) {
+        $skillSrc = Get-SkillSource $skillName
+        if ($null -eq $skillSrc) {
             Write-Error "  [ERROR] Skill not found: $skillName"
             continue
         }
 
+        $displayName = Get-SkillDisplayName $skillName
         $skillInstalled = $false
         foreach ($targetDir in $targetDirs) {
-            $result = Install-SkillToDir -SkillName $skillName -TargetDir $targetDir
+            $result = Install-SkillToDir -SkillName $skillName -SkillSrc $skillSrc -TargetDir $targetDir
             if ($result) {
                 $skillInstalled = $true
             }
@@ -366,9 +499,15 @@ Task files are markdown files in ``tasks/`` directory:
 
 # Main function
 function Main {
+    # List folders if requested
+    if ($ListFolders) {
+        Show-Folders
+        exit 0
+    }
+
     # List skills if requested
     if ($List) {
-        Show-Skills
+        Show-Skills -TargetFolder $Folder
         exit 0
     }
 
@@ -387,9 +526,9 @@ function Main {
     # Get skills to install
     $skillsToInstall = @()
     if ($All) {
-        $skillsToInstall = Get-AvailableSkills
+        $skillsToInstall = Get-AvailableSkills -TargetFolder $Folder
         if ($skillsToInstall.Count -eq 0) {
-            Write-Error "Error: No skills found in $ScriptDir"
+            Write-Error "Error: No skills found"
             exit 1
         }
     }
@@ -401,7 +540,9 @@ function Main {
         Write-Host ""
         Write-Host "Usage:"
         Write-Host "  .\install.ps1 -System -All                    # Install all skills to system"
+        Write-Host "  .\install.ps1 -System -Folder fe-skills -All  # Install all fe-skills to system"
         Write-Host "  .\install.ps1 -System -Skills 'skill1','skill2'  # Install specific skills"
+        Write-Host "  .\install.ps1 -Project -All                   # Install all skills to current project"
         exit 1
     }
 
@@ -416,7 +557,7 @@ function Main {
     Write-Host ""
     Write-Host "Installed skills:"
     foreach ($skill in $skillsToInstall) {
-        Write-Host "  - $skill"
+        Write-Host "  - $(Get-SkillDisplayName $skill)"
     }
 }
 

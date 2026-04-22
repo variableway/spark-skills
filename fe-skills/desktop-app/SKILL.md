@@ -129,10 +129,11 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 ```
 
-### 3. 页面组件必须是 "use client"
+### 3. 页面组件的 "use client" 使用规范
 
-Tauri API 只在客户端 window 对象上存在，所有页面组件都需要：
+Tauri API 只在客户端 window 对象上存在。但**不要无脑给所有页面加 `"use client"`**，应遵循以下分层原则：
 
+**页面级组件**（必须 `"use client"`）：
 ```tsx
 "use client";
 
@@ -155,7 +156,93 @@ export default function Page() {
 
 **原因**：Next.js SSR 阶段无法访问 `window.__TAURI_INTERNALS__`，不等待 mounted 会导致 hydration mismatch。
 
-### 4. Tauri IPC 通信
+**布局级组件**（优先 Server Component）：
+```tsx
+// app/layout.tsx — 不加 "use client"
+export default function RootLayout({ children }) {
+  return (
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+**提取客户端逻辑到子组件**：
+```tsx
+// app/page.tsx — Server Component（不加 "use client"）
+import { TauriClient } from "@/components/tauri-client";
+
+export default function Page() {
+  return (
+    <main>
+      <h1>Dashboard</h1>
+      {/* 只有需要 Tauri API 的部分用客户端组件包裹 */}
+      <TauriClient />
+    </main>
+  );
+}
+
+// components/tauri-client.tsx — Client Component
+"use client";
+
+export function TauriClient() {
+  // Tauri API 调用逻辑
+}
+```
+
+> **原则**：能作为 Server Component 的就保持 Server Component，只在真正需要浏览器 API 的最小组件上加 `"use client"`。
+
+### 4. Next.js 16 桌面应用模式
+
+桌面应用同样受益于 Next.js 16 的新特性：
+
+**Turbopack**：
+```bash
+# next.config.ts
+const nextConfig = {
+  // Turbopack 是默认构建工具，无需额外配置
+  output: "export",
+  distDir: "out",
+};
+```
+
+**React Compiler**（推荐启用）：
+```ts
+// next.config.ts
+const nextConfig = {
+  output: "export",
+  reactCompiler: true,
+};
+```
+
+**Async APIs**：
+```tsx
+// app/settings/page.tsx — 即使是 "use client" 页面，动态 API 仍是异步的
+"use client";
+
+import { useSearchParams } from "next/navigation";
+
+export default function SettingsPage() {
+  // Next.js 16 中 useSearchParams 仍保持同步 hook 行为
+  // 但 cookies(), headers(), draftMode() 在 Server Actions 中变为 async
+  return <div>...</div>;
+}
+```
+
+**Cache Components**（适用于 Web 模式）：
+```tsx
+'use cache'
+
+export async function StaticContent() {
+  const data = await fetchSomeData()
+  return <div>{data}</div>
+}
+```
+
+> 注意：桌面应用通常以 `output: "export"` 静态导出，因此大部分页面已经是静态的。Cache Components 主要对混合 Web/桌面部署有用。
+
+### 5. Tauri IPC 通信
 
 **Rust 端（lib.rs）**：
 ```rust
@@ -184,7 +271,7 @@ pub fn run() {
 }
 ```
 
-### 5. 侧边栏布局
+### 6. 侧边栏布局
 
 ```tsx
 // App Shell 结构
@@ -481,11 +568,30 @@ npx tauri build
 
 ---
 
+## 示范项目
+
+以下开源项目展示了本 Skill 规范的实际应用。实现具体功能时，按「任务 → 项目 → 文件路径」定位参考代码。
+
+| 你要做的 | 参考项目 | 关键文件路径 |
+|---------|---------|-------------|
+| **初始化桌面应用（前端层）** | [innate-next-mono](https://github.com/variableway/innate-next-mono) | `apps/web/` — Web Starter 模板，作为桌面应用前端基础 |
+| **配置 Tauri + Rust 后端** | [innate-executable](https://github.com/variableway/innate-executable) | `apps/desktop/src-tauri/tauri.conf.json` |
+| **配置 Rust Commands** | [innate-executable](https://github.com/variableway/innate-executable) | `apps/desktop/src-tauri/src/lib.rs` |
+| **配置 Tauri 权限** | [innate-executable](https://github.com/variableway/innate-executable) | `apps/desktop/src-tauri/capabilities/default.json` |
+| **实现 Zustand + Tauri Store 持久化** | [innate-executable](https://github.com/variableway/innate-executable) | `apps/desktop/src/lib/tauri-storage.ts` |
+| **实现 PTY 终端** | [innate-executable](https://github.com/variableway/innate-executable) | `src-tauri/src/lib.rs`（PTY 部分） |
+| **搭建桌面应用布局** | [innate-executable](https://github.com/variableway/innate-executable) | `src/components/layout/app-shell.tsx` |
+| **查看 UI 组件实现** | [innate-next-mono](https://github.com/variableway/innate-next-mono) | `packages/ui/src/block/` — 业务区块 |
+| **学习 Diff UI / Terminal 设计** | [1code](https://github.com/21st-dev/1code) | 源码中对应功能模块（思路参考，不直接复制） |
+
+> 完整映射表和引用原则见 [references/demo-projects.md](references/demo-projects.md)
+
 ## 参考资源
 
 - [innate-executable](https://github.com/variableway/innate-executable) — 基础桌面应用模板
 - [innate-next-mono](https://github.com/variableway/innate-next-mono) — Playground 完整实现
 - [Tauri v2 官方文档](https://v2.tauri.app/)
 - [innate-frontend Skill](../innate-frontend/SKILL.md) — Web 前端组件库规范
+- [示范项目索引](references/demo-projects.md) — 参考项目关键代码模式提取
 - [Playground 模式参考](references/playground-mode.md) — PTY 终端 + 教程系统
 - [AI Chat 模式参考](references/ai-chat-mode.md) — GLM API 聊天集成

@@ -231,6 +231,21 @@ def cmd_finish(args):
     
     summary = "\n".join(summary_parts)
 
+    # Doc update check — uses shared doc_checker from git-workflow
+    try:
+        doc_checker = Path(__file__).resolve().parent.parent.parent / "git-workflow" / "scripts" / "doc_checker.py"
+        if doc_checker.exists():
+            result = subprocess.run(
+                [sys.executable, str(doc_checker), "--markdown"],
+                capture_output=True, text=True, check=False,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                doc_suggestion = result.stdout.strip()
+                print(doc_suggestion)
+                summary += "\n\n" + doc_suggestion
+    except Exception:
+        pass
+
     # Update local tracing
     try:
         tracing_args = _TracingArgs(

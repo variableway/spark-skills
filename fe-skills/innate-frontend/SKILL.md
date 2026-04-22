@@ -11,9 +11,9 @@ supported_agents:
 
 # Innate Frontend Skill
 
-统一的 Web 前端开发 Skill，基于 [innate-next-mono](https://github.com/variableway/innate-next-mono) 项目提炼。
+统一的 Web 前端开发 Skill，基于 [innate-next-mono](https://github.com/variableway/innate-next-mono) 聚合型 Starter 项目。
 
-提供完整的 `@innate/ui` 组件库（57+ 基础组件 + 7 个 Landing 区块 + Auth/Mail/Chat 业务区块），配合 Next.js 16 + Tailwind CSS v4 + OKLCH 主题系统。内置项目验证规则，自动检查常见配置问题。
+采用"社区组件 + 自定义配置层"模式：基础 UI 组件通过 shadcn/ui CLI 安装，营销区块通过 21st.dev 获取，主题系统和业务区块（Landing/Auth/Chat/Mail）由 `@innate/ui` 维护。配合 Next.js 16 + Tailwind CSS v4 + OKLCH 主题系统。
 
 > **桌面应用**：如需构建 Tauri 桌面应用，请使用 `desktop-app` Skill。本 Skill 聚焦 Web 前端。
 
@@ -30,6 +30,93 @@ supported_agents:
 | Lucide React | latest | 图标库 |
 | React Hook Form + Zod | latest | 表单验证 |
 | Recharts | 3.x | 图表 |
+| Framer Motion | latest | 动画库 |
+
+## 快速复用（跨项目）
+
+> 后端开发者懂前端——核心诉求是**不要重复造轮子**。
+
+### 复用策略一览
+
+| 方式 | 适用场景 | 优点 | 缺点 |
+|------|---------|------|------|
+| **Monorepo 引用** | 多个相关项目 | 零安装，一处更新全局生效 | 项目必须都在同一 repo |
+| **复制组件代码** | 独立项目 | 完全独立，可自由定制 | 更新需手动同步 |
+| **实时安装** | 临时/探索 | 获取最新版本 | 网络依赖，配置重复 |
+
+### 方式一：Monorepo 内引用（推荐）
+
+所有 Web 应用放在 `apps/` 下，共享 `packages/ui/` 组件库：
+
+```bash
+cd innate-next-mono
+mkdir apps/my-new-project
+cd apps/my-new-project
+
+# 直接引用，无需安装
+import { Button, Card } from "@innate/ui"
+import "@innate/ui/globals.css"
+```
+
+在 `package.json` 中添加 workspace 依赖：
+```json
+{
+  "dependencies": {
+    "@innate/ui": "workspace:*"
+  }
+}
+```
+
+### 方式二：复制组件代码到独立项目
+
+```bash
+# 1. 创建新项目
+npx shadcn@latest init --yes --template next --base-color zinc
+
+# 2. 从 innate-next-mono 复制组件
+cp -r innate-next-mono/packages/ui/src/components/ui/* my-project/components/ui/
+cp innate-next-mono/packages/ui/src/globals.css my-project/app/globals.css
+cp innate-next-mono/packages/ui/src/lib/utils.ts my-project/lib/utils.ts
+
+# 3. 复制业务区块（可选）
+cp -r innate-next-mono/packages/ui/src/block/* my-project/components/block/
+```
+
+### 方式三：实时安装（按需）
+
+```bash
+# 基础组件
+npx shadcn@latest add button card dialog
+
+# 21st.dev 营销区块
+npx shadcn@latest add "https://21st.dev/r/..."
+```
+
+## 设计哲学
+
+创建有辨识度、生产级的界面。拒绝千篇一律的"AI 味"设计。
+
+- **禁止**使用 Inter、Roboto、Poppins、Montserrat、Open Sans 等过度使用的字体
+- **禁止**在白底上使用紫色渐变等陈词滥调
+- **禁止**套用 cookie-cutter 布局
+- **必须**在写代码前先确定一个大胆的美学方向
+- 始终配对使用 display font + body font
+
+## 组件来源：21st.dev
+
+在从头编写任何 UI 组件之前，先检查 https://21st.dev 是否已有生产就绪的版本。
+
+**安装组件：**
+```bash
+npx shadcn@latest add "[component-url-from-21st.dev]"
+```
+
+**关键分类：**
+- **Marketing Blocks**: Heroes、Features、CTA、Backgrounds、Testimonials、Pricing、Footers
+- **UI Components**: Buttons、Inputs、Cards、Selects、Dialogs、Tables、AI Chats、Sidebars
+- **完整目录**: https://21st.dev/community/components
+
+**重要规则**：安装了 21st.dev 组件后，**必须使用它**。不要安装后又手写一个自定义版本替代。如果安装了 navbar 组件，就删除手写的 navbar 并使用安装的版本。安装后不使用的组件称为"孤儿组件（orphaned installs）"，必须避免。
 
 ## 触发条件
 
@@ -263,6 +350,19 @@ project/
 └── package.json
 ```
 
+## Typography 字体规范
+
+使用 `next/font/google` 加载字体（自动优化、自托管）。
+
+**禁用字体**: Inter, Roboto, Poppins, Montserrat, Open Sans, Playfair Display
+
+**推荐 Display 字体**: Sora, Elms Sans, Vend Sans, Zalando Sans
+**推荐 Body 字体**: Manrope, Figtree, Source Sans 3, Stack Sans Text
+**推荐 Serif**: Bacasime Antique, Gentium Plus, Libertinus Serif
+**推荐 Mono**: SUSE Mono, JetBrains Mono
+
+始终配对使用 display font + body font。优先使用可变字体（Variable Fonts）。
+
 ## 页面开发模式
 
 ### Landing Page 模式
@@ -384,18 +484,35 @@ function LoginForm() {
 
 > @innate/ui 基于 shadcn/ui（Radix UI 基础），组件代码直接存在于 `packages/ui/src/components/ui/` 中。
 
-### 当前策略
+### 核心理念：代码拷贝 = 合理复用
 
-shadcn/ui 的设计理念是"复制而非依赖"——组件源码直接放在项目中，用户可自由修改。因此：
+shadcn/ui 的设计理念是**"复制而非依赖"**——组件源码直接放在项目中，用户可自由修改。因此：
 
 1. **组件源码在项目中**：`packages/ui/src/components/ui/` 下的组件是完整的源码，不是 npm 依赖
-2. **升级方式**：使用 `npx shadcn@latest add <component>` 覆盖更新单个组件
-3. **冲突处理**：如果对组件有自定义修改，升级后需手动合并
+2. **预置而非实时安装**：所有常用组件已预置在 `packages/ui/` 中，新项目无需逐个安装
+3. **自动同步**：通过 GitHub Actions 每周自动检查并更新组件
 
-### 升级步骤
+### 自动更新流水线
+
+```
+每周一凌晨
+    ↓
+GitHub Action 运行 npx shadcn@latest diff
+    ↓
+如果有更新 → 自动批量更新 → 创建 PR
+    ↓
+人工 Review（5 分钟）→ Merge → 所有项目自动获得最新组件
+```
+
+**已配置**：`.github/workflows/update-shadcn-components.yml`
+- 每周一凌晨 2 点自动检查更新
+- 自动创建 PR，附带更新清单
+- 支持手动触发（workflow_dispatch）
+
+### 手动更新
 
 ```bash
-# 1. 查看当前安装的组件
+# 1. 查看当前组件与官方的差异
 cd packages/ui
 npx shadcn@latest diff
 
@@ -403,10 +520,24 @@ npx shadcn@latest diff
 npx shadcn@latest add button --overwrite
 
 # 3. 批量升级所有组件
-npx shadcn@latest add --all --overwrite
+for f in src/components/ui/*.tsx; do
+  name=$(basename "$f" .tsx)
+  npx shadcn@latest add "$name" --overwrite --yes || true
+done
 
 # 4. 如果有自定义修改，使用 diff 对比
 git diff packages/ui/src/components/ui/button.tsx
+```
+
+### 同步回 packages/ui/
+
+如果通过 `apps/web/` 更新了组件，需要同步回 `packages/ui/`：
+
+```bash
+# 从 apps/web 同步到 packages/ui
+rsync -av apps/web/components/ui/ packages/ui/src/components/ui/
+rsync -av apps/web/lib/utils.ts packages/ui/src/lib/
+rsync -av apps/web/app/globals.css packages/ui/src/
 ```
 
 ### 保持一致性的原则
@@ -414,22 +545,169 @@ git diff packages/ui/src/components/ui/button.tsx
 - **不直接修改 shadcn/ui 基础组件源码**：自定义通过 `className` 覆盖或创建包装组件
 - **业务区块组件（block/）自定义**：这些是项目特有的，不受 shadcn/ui 升级影响
 - **Design tokens 通过 CSS 变量**：主题定制通过 `globals.css` 的 CSS 变量，不修改组件内部样式
+- **Review 清单**：更新后检查 theme 兼容性、import 路径、breaking changes
 
 ---
+
+## Next.js 16 新特性
+
+### Turbopack（默认构建工具）
+Turbopack 现在是 Next.js 16 的默认构建工具，无需配置：
+- 2-5× 更快的生产构建
+- 最高 10× 更快的 Fast Refresh
+
+如需回退到 webpack：
+```bash
+next build --webpack
+```
+
+### Cache Components（显式缓存模型）
+Next.js 16 引入 `"use cache"` 指令实现显式缓存：
+
+```tsx
+'use cache'
+
+export async function ProductList() {
+  const products = await fetchProducts()
+  return <div>{/* ... */}</div>
+}
+```
+
+启用配置：
+```ts
+// next.config.ts
+export default {
+  experimental: {
+    cacheComponents: true
+  }
+}
+```
+
+**与 Next.js 15 的关键区别**：
+- 所有动态代码默认在请求时执行（无隐式缓存）
+- 缓存完全通过 `"use cache"` 选择加入
+
+### Async APIs（破坏性变更）
+所有动态 API 现在都是异步的：
+
+```tsx
+// Next.js 16 - 必须使用 async
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const { id } = await params
+  const { q } = await searchParams
+  // ...
+}
+```
+
+```tsx
+// Async cookies, headers, draftMode
+import { cookies, headers, draftMode } from 'next/headers'
+
+async function getData() {
+  const cookieStore = await cookies()
+  const headersList = await headers()
+  const { isEnabled } = await draftMode()
+}
+```
+
+### React Compiler（稳定版）
+自动记忆化，无需手动使用 `useMemo`/`useCallback`：
+
+```ts
+// next.config.ts
+export default {
+  reactCompiler: true
+}
+```
+
+```bash
+npm install babel-plugin-react-compiler
+```
+
+### proxy.ts（替代 middleware.ts）
+将 `middleware.ts` 重命名为 `proxy.ts`，命名更清晰：
+
+```ts
+// proxy.ts
+import type { ProxyConfig } from 'next'
+
+export const proxy: ProxyConfig = async (request) => {
+  // 在 Node.js 运行时执行
+}
+```
+
+> `middleware.ts` 仍然可用，但在 Edge runtime 场景下已弃用。
+
+### React 19.2 特性
+- **View Transitions**: 导航期间动画过渡元素
+- **useEffectEvent**: 从 Effects 中提取非响应式逻辑
+- **Activity**: 使用状态保留渲染后台活动
+
+## Accessibility 与 Motion
+
+### Accessibility（WCAG 2.1 AA）
+- 使用语义化 HTML（button、nav、main、article，而非全部用 div）
+- 所有交互元素添加 ARIA label
+- 文字对比度达到 4.5:1
+- 支持键盘导航
+- 提供 skip-to-content 链接
+
+### Motion & Animation
+- 使用 Framer Motion 实现滚动揭示和过渡动画
+- 视口进入时子元素交错动画（stagger）
+- 卡片和按钮的悬停微交互
+- 动画必须有目的性——增强体验，而非分散注意力
+- 利用 React 19.2 View Transitions 实现导航动画
+
+## 构建 UI 的 7 步流程
+
+当用户要求构建 UI 时，按以下顺序执行：
+
+1. **确定美学方向**（或询问用户偏好）
+2. **浏览 21st.dev** 寻找匹配的组件
+3. **通过 `npx shadcn@latest add "[url]"` 安装组件**
+4. **使用 Tailwind 自定义样式**
+5. **应用 Next.js 16 模式**（async APIs、显式缓存）
+6. **使用 Framer Motion 和 View Transitions 添加动画**
+7. **验证无障碍访问（Accessibility）**
 
 ## 注意事项
 
 1. **统一使用 @innate/ui**：所有前端项目使用统一的组件库，不要重复造轮子
-2. **OKLCH 色彩空间**：自定义颜色时使用 `oklch()` 格式，与主题系统一致
-3. **data-slot 属性**：组件根元素添加 `data-slot="component-name"` 用于样式定位
-4. **cn() 合并类名**：始终使用 `cn()` 而非模板字符串合并 className
-5. **"use client"**：所有交互组件必须添加客户端指令
-6. **类型导出**：组件 Props 类型使用 `export type { XxxProps }` 导出
+2. **优先使用 21st.dev**：写组件前先查 21st.dev，避免手写已有成熟方案
+3. **OKLCH 色彩空间**：自定义颜色时使用 `oklch()` 格式，与主题系统一致
+4. **data-slot 属性**：组件根元素添加 `data-slot="component-name"` 用于样式定位
+5. **cn() 合并类名**：始终使用 `cn()` 而非模板字符串合并 className
+6. **"use client"**：所有交互组件必须添加客户端指令
+7. **类型导出**：组件 Props 类型使用 `export type { XxxProps }` 导出
+8. **Server Components 优先**：Next.js App Router 默认使用 Server Components，只有实际需要（交互、事件监听、浏览器 API）时才加 `'use client'`
+
+## 示范项目
+
+以下开源项目展示了本 Skill 规范的实际应用。实现具体功能时，按「任务 → 项目 → 文件路径」定位参考代码。
+
+| 你要做的 | 参考项目 | 关键文件路径 |
+|---------|---------|-------------|
+| **初始化 Web 项目** | [innate-next-mono](https://github.com/variableway/innate-next-mono) | `apps/web/` — Next.js 16 Starter 模板 |
+| **查看主题/CSS 变量** | [innate-next-mono](https://github.com/variableway/innate-next-mono) | `packages/ui/src/globals.css` — OKLCH 主题系统 |
+| **使用业务区块**（Landing/Auth/Chat/Mail） | [innate-next-mono](https://github.com/variableway/innate-next-mono) | `packages/ui/src/block/**/*.tsx` |
+| **搭建 Landing Page** | [innate-next-mono](https://github.com/variableway/innate-next-mono) | `apps/web/app/page.tsx` |
+| **搭建 Dashboard 布局** | [innate-next-mono](https://github.com/variableway/innate-next-mono) | `apps/web/app/dashboard/page.tsx` |
+| **安装基础组件**（Button/Card/Dialog） | shadcn/ui 官方 | `npx shadcn@latest add button card dialog` |
+| **安装营销区块**（Hero/Features/CTA） | [21st.dev](https://21st.dev) | `npx shadcn@latest add "https://21st.dev/r/..."` |
+| **一键初始化完整环境** | [innate-next-mono](https://github.com/variableway/innate-next-mono) | `./scripts/init-starter.sh` |
+
+> 完整映射表和引用原则见 [references/demo-projects.md](references/demo-projects.md)
 
 ## 参考资源
 
 - [组件清单](references/component-catalog.md) — 57+ 组件完整列表
 - [主题系统](references/theme-system.md) — OKLCH 色彩变量详解
-- [innate-next-mono](https://github.com/variableway/innate-next-mono) — 组件库源项目
-- [innate-websites](https://github.com/variableway/innate-websites) — 网站项目示例
+- [示范项目索引](references/demo-projects.md) — 参考项目关键代码模式提取
 - [desktop-app Skill](../desktop-app/SKILL.md) — 桌面应用开发 Skill
