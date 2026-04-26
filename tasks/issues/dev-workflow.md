@@ -71,3 +71,8 @@ local-workflow skill have moved into dev folder
 ## Task 11: update docs
 
 1. 请分析着些skill的对应文档
+
+## Task 12: update README
+
+1. update README file
+2. Update install script into README file
