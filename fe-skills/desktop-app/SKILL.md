@@ -17,6 +17,8 @@ supported_agents:
 
 > **UI 组件库**：使用 [innate-frontend](../innate-frontend/SKILL.md) Skill 定义的 `@innate/ui` 组件库和前端规范。本 Skill 聚焦 Tauri 桌面层和 Rust 后端。
 
+> **UI 模式参考**：当项目内存在 `admin-ui` 这类管理后台模板时，只把它作为 dashboard、sidebar、table、wizard、detail、integration health 等模式参考；不要把它作为 Tauri/Next 桌面应用的主框架，也不要因为模板更完整就迁移 `k-innate` 的 runtime。
+
 ## 技术栈
 
 | 技术 | 版本 | 用途 |
@@ -285,6 +287,26 @@ pub fn run() {
 ```
 
 特性：Cmd/Ctrl+B 折叠/展开、移动端自动切换为 Sheet、图标模式 / 展开模式。
+
+
+### 7. Admin UI 模式复用边界
+
+如果当前仓库存在 `admin-ui`、dashboard starter、shadcn admin template 等项目，按以下边界处理：
+
+| 来源 | 可以复用 | 不要复用 |
+|------|----------|----------|
+| `admin-ui` | dashboard、sidebar、data table、wizard、detail panel、integration health、scene catalog 的交互和布局模式 | TanStack Start/TanStack Router/Vite/Nitro runtime 作为桌面主框架 |
+| shadcn/ui | Button、Card、Sidebar、Table、Dialog、Tabs、Select、Badge 等基础组件和主题 token | 每个 app 独立 fork 一份长期发散的基础组件 |
+| `@innate/ui` | 统一组件出口、主题、通用 layout primitives | 写入具体业务流程或项目专属状态 |
+| `k-innate` / desktop app | Tauri、Next.js、Rust commands、SQLite/local store、sidecar/process boundary | 被 admin template 反向替换 runtime |
+
+执行规则：
+
+- 主框架保持 `Tauri v2 + Next.js + React + Rust`。
+- 基础组件优先来自 `@innate/ui` 或受控的 shadcn/ui 本地组件。
+- `admin-ui` 只提供界面组织方式和交互参考，迁移时要改成当前项目的 App Router、状态管理和 Tauri IPC 方式。
+- 业务组件放在桌面应用自己的 `components/*` 中；只有跨两个以上应用通用后才提升到 `@innate/ui`。
+- 不要引入 TanStack Router、Nitro server runtime 或 admin 模板的领域模型，除非用户明确要求迁移整个前端栈。
 
 ---
 
@@ -555,6 +577,7 @@ npx tauri build
 - 页面渲染前检查 `mounted` 状态，避免 hydration mismatch
 - Tauri API 调用前检查 `"__TAURI_INTERNALS__" in window`
 - 使用 `@innate/ui` 组件和 `cn()` 保持 UI 一致
+- 可参考 `admin-ui` 的 dashboard/sidebar/table/wizard/detail 模式，但必须适配到当前 Tauri/Next 架构
 - 新增 Rust 命令后同步更新 `capabilities/default.json`
 - 使用 pnpm workspace 协议引用本地包：`"workspace:*"`
 
@@ -563,6 +586,7 @@ npx tauri build
 - 在页面组件中忘记 `"use client"` 导致 Tauri API 报错
 - 在服务端渲染阶段直接访问 `window` 对象
 - 修改 Tauri 配置后忘记同步 `frontendDist` 和 Next.js `distDir`
+- 因为 `admin-ui` 模板更完整就把桌面应用迁移到 TanStack Start/Vite/Nitro runtime
 - 在 Zustand 中直接修改原状态对象（始终用 `set`）
 - 生产环境 `tauri.conf.json` 中 `"csp": null`（需配置安全策略）
 
